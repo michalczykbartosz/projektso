@@ -2,97 +2,47 @@
 
 **Imię:** Bartosz **Nazwisko:** Michalczyk **Nr. Albumu:** 156487 **Github:** https://github.com/michalczykbartosz/projektso
 
-## 1. Szczegółowy opis projektu oraz zasady symulacji:
-Projekt realizuje problem synchronizacji procesów w środowisku wielowątkowym/wieloprocesowym, modelując działanie magazynu spedycyjnego.
-System składa się z niezależnych procesów symulujących pracowników, taśmę transportową oraz ciężarówki, zarządzanych przez proces dyspozytora.
+## 1. Pracownicy i Przesyłki
+W magazynie przy taśmie transportowej pracuje trzech pracowników (P1, P2, P3). Układają oni paczki o następujących gabarytach:
 
-### A. Procesy
-1.  **Pracownicy Taśmowi (P1, P2, P3) – Producenci:**
-    * Każdy pracownik obsługuje inny typ paczki (A, B, C).
-    * Pracują w pętli nieskończonej, starając się jak najszybciej położyć paczkę na taśmie.
-    * Przed położeniem paczki muszą sprawdzić **dwa warunki krytyczne** taśmy (ilość miejsc i udźwig).
-2.  **Pracownik Ekspresowy (P4) – Producent Uprzywilejowany:**
-    * Nie korzysta z taśmy transportowej.
-    * Pozostaje w stanie uśpienia do momentu otrzymania **rozkazu (Sygnał 2)**.
-    * Ma absolutny priorytet dostępu do ciężarówki (blokuje taśmę na czas swojego załadunku).
-3.  **Ciężarówka – Konsument:**
-    * Pobiera paczki z końca taśmy (zgodnie z kolejnością FIFO).
-    * Sumuje wagę i objętość ładunku.
-    * Odjeżdża po zapełnieniu lub na rozkaz dyspozytora.
-4.  **Dyspozytor:**
-    * Interfejs sterujący symulacją, wysyłający asynchroniczne sygnały do pozostałych procesów.
+| Pracownik | Typ Paczki | Wymiary (cm) |
+| :---:     | :---:      | :---:        |
+| **P1**    | **A**      | 64 x 38 x 8  |
+| **P2**    | **B**      | 64 x 38 x 19 |
+| **P3**    | **C**      | 64 x 38 x 41 |
 
-    ### B. Parametry i Ograniczenia (Zasady Matematyczne)
+* **Waga:** Maksymalnie 25 kg (wartość losowa z zakresu 0,1 kg – 25,0 kg).
+* **Założenie:** Czym mniejsza paczka, tym mniejszy ciężar.
 
-#### 1. Taśma Transportowa (Bufor Ograniczony)
-Taśma jest zasobem dzielonym o ścisłych ograniczeniach. Wstawienie paczki o wadze $w$ jest możliwe wtedy i tylko wtedy, gdy spełnione są jednocześnie dwa warunki:
-* $$Liczba_{paczek} < K$$ (Dostępne miejsce na taśmie)
-* $$Suma_{wag} + w \le M$$ (Dostępny udźwig taśmy)
+## 2. Przesyłki Ekspresowe (Pracownik P4)
+* Pracownik **P4** odpowiada za załadunek ekspresowy.
+* Przesyłki te dostarczane są osobno (nie trafiają na taśmę).
+* **Priorytet:** Mają wyższy priorytet – ich załadunek musi odbyć się w pierwszej kolejności.
+* Pakiet ekspresowy może zawierać paczki A, B i C o wadze < 25 kg.
 
-Jeśli którykolwiek warunek nie jest spełniony, pracownik (P1-P3) zostaje zablokowany na semaforze do momentu zwolnienia zasobów przez ciężarówkę.
+## 3. Taśma Transportowa i Ciężarówki
+Na końcu taśmy stoi ciężarówka, którą należy załadować do pełna.
 
-#### 2. Definicje Paczek
-Wagi paczek losowane są z zakresu **0.1 kg – 25.0 kg**. Przyjęto model, w którym waga koreluje z objętością (większa paczka ma większą szansę być cięższą).
+**Parametry Ciężarówek:**
+* **Ładowność:** W [kg]
+* **Pojemność:** V [m3]
+* **Liczba ciężarówek:** N
+* **Cykl pracy:** Po załadowaniu ciężarówka rozwozi towar i wraca po czasie **Ti**. Po odjeździe pełnej ciężarówki, natychmiast podstawia się nowa (jeśli jest dostępna).
 
-| Pracownik | Typ | Wymiary [cm] | Objętość $V_p$ [$m^3$] | Uwagi |
-| :--- | :---: | :--- | :--- | :--- |
-| **P1** | A | 64x38x8 | 0.019 | Standardowa |
-| **P2** | B | 64x38x19 | 0.046 | Standardowa |
-| **P3** | C | 64x38x41 | 0.099 | Standardowa |
-| **P4** | Mix | A/B/C | wg typu | Tylko paczki < 25kg |
+**Ograniczenia Taśmy:**
+* **Liczba przesyłek:** Maksymalnie **K** przesyłek w danej chwili.
+* **Udźwig:** Maksymalnie **M** jednostek masy.
+* **Zasada:** Niedopuszczalne jest przekroczenie udźwigu (np. same najcięższe paczki).
+* **Kolejność:** Przesyłki muszą trafić na samochód w takiej samej kolejności, w jakiej zostały położone na taśmie (FIFO).
 
-#### 3. Logistyka Ciężarówek
-W systemie krąży łącznie $N$ ciężarówek. W danej chwili przy rampie stoi tylko jedna.
-Ciężarówka odjeżdża z magazynu (zwalnia miejsce dla nowej), gdy zajdzie jedno ze zdarzeń:
-1.  **Przeładowanie wagowe:** $$Suma_{wag} + w_{nowa} > W$$
-2.  **Przeładowanie objętościowe:** $$Suma_{obj} + V_{nowa} > V$$
-3.  **Wymuszenie:** Otrzymano Sygnał 1 od dyspozytora.
+## 4. Sterowanie (Sygnały Dyspozytora)
+Dyspozytor steruje pracą magazynu za pomocą sygnałów:
 
-Po odjeździe ciężarówka "rozwozi towar" przez czas $T_i$ (symulowany funkcją `sleep`), po czym wraca do kolejki oczekujących na wjazd.
+1.  **Sygnał 1:** Ciężarówka stojąca przy taśmie odjeżdża z niepełnym ładunkiem.
+2.  **Sygnał 2:** Pracownik P4 dostarcza pakiet przesyłek ekspresowych do ciężarówki.
+3.  **Sygnał 3:** Koniec pracy. Pracownicy kończą układanie, ciężarówki kończą pracę po rozwiezieniu wszystkich przesyłek.
 
-### C. System Sygnałów (Sterowanie)
-Symulacja obsługuje interwencje dyspozytora poprzez sygnały systemowe (mapowane na sygnały UNIX):
-
-* **SYGNAŁ 1 (np. SIGUSR1): Wymuszony Odjazd**
-    * Skierowany do: **Obecnej ciężarówki**.
-    * Akcja: Ciężarówka natychmiast przerywa załadunek, zamyka drzwi i odjeżdża, niezależnie od stopnia zapełnienia.
-* **SYGNAŁ 2 (np. SIGUSR2): Załadunek Ekspresowy**
-    * Skierowany do: **Pracownika P4**.
-    * Akcja: P4 wybudza się, blokuje dostęp do ciężarówki (mutex), ładuje jeden pakiet priorytetowy bezpośrednio na pakę i zasypia.
-* **SYGNAŁ 3 (np. SIGINT/SIGTERM): Koniec Pracy**
-    * Skierowany do: **Wszystkich procesów**.
-    * Akcja: Pracownicy kończą pętle, ciężarówki zjeżdżają do bazy. Główny proces czyści pamięć dzieloną i usuwa semafory (`ipcrm`), a następnie generuje raport końcowy.
-
----
-
-## 2. Architektura i Mechanizmy IPC
-
-W projekcie wykorzystano natywne mechanizmy Systemu V:
-
-### A. Pamięć Dzielona (`shmget`, `shmat`)
-Przechowuje stan całego systemu, dostępny dla wszystkich procesów:
-* Bufor cykliczny reprezentujący taśmę.
-* Liczniki: aktualna waga na taśmie, liczba paczek, stan załadowania obecnej ciężarówki.
-
-### B. Semafory (`semget`, `semop`, `semctl`)
-Zestaw semaforów kontroluje dostęp do sekcji krytycznych i synchronizuje przepływ:
-1.  **SEM_MUTEX:** Semafor binarny (zainicjowany na 1). Realizuje wzajemne wykluczanie (Mutual Exclusion) przy dostępie do pamięci dzielonej.
-2.  **SEM_EMPTY:** Zlicza wolne miejsca na taśmie (blokuje pracowników, gdy taśma pełna).
-3.  **SEM_FULL:** Zlicza paczki gotowe do odbioru (blokuje ciężarówkę, gdy taśma pusta).
-4.  **SEM_WEIGHT:** Kontroluje dostępny udźwig taśmy (blokuje położenie paczki, jeśli przekroczono limit $M$).
-5.  **SEM_TRUCK_READY:** Synchronizuje wymianę ciężarówek (zapewnia, że paczki są ładowane tylko gdy pojazd jest podstawiony).
-
----
-
-## 3. Raportowanie
-Po zakończeniu pracy program generuje plik `raport.txt` oraz czyści zasoby systemowe. Raport zawiera:
-* Liczbę obsłużonych ciężarówek.
-* Sumaryczną masę i objętość przewiezionych ładunków.
-* Stan taśmy w momencie zatrzymania.
-
----
-
-## 4. Plan Testów i Weryfikacja
+## 5. Plan Testów i Weryfikacja
 
 System zostanie poddany testom weryfikującym poprawność synchronizacji procesów oraz obsługę sygnałów.
 
