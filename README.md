@@ -59,7 +59,7 @@ System zostanie poddany testom weryfikującym poprawność synchronizacji proces
 ### Scenariusz C: Wymuszony odjazd ciężarówki
 **Cel:** Weryfikacja obsługi sygnału odjazdu (Sygnał 1).
 1.  **Działanie:** Wysłanie sygnału nr 1, gdy ciężarówka jest zapełniona np. w 50%.
-2.  **Oczekiwany rezultat:** Ciężarówka odjeżdża natychmiast. Na jej miejsce po czasie $Ti$ podstawia się nowa (pusta).
+2.  **Oczekiwany rezultat:** Ciężarówka odjeżdża natychmiast (zwalnia zasób). Na jej miejsce **natychmiast** podstawia się nowa ciężarówka jeżeli jest dostępna.
 
 ### Scenariusz D: Poprawność FIFO i integralność danych
 **Cel:** Sprawdzenie, czy paczki nie giną i zachowana jest kolejność.
