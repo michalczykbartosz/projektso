@@ -13,7 +13,21 @@ shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
 	klucz = ftok(".", 'B'); //utworzenie klucza do pamieci wspoldzielonej
 
 	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0666); //utworzenie pamieci wspol dzielonej z prawami 0666
+
+	if (id_pamieci == -1)
+	{
+		perror("Blad tworzenia pamieci wspoldzielonej!");
+		exit(1);
+	}
+
 	adres = (stan_tasmy*) shmat(id_pamieci, nullptr,0); //dolaczenie pamieci wspoldzielonej
+
+	if (adres == (void*)-1)
+	{
+		perror("Blad dolaczania pamieci wspoldzielonej!");
+		exit(1);
+	}
+
 	pid_dyspozytora = getpid();
 }
 
