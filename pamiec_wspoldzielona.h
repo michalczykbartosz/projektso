@@ -2,7 +2,9 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <unistd.h>
 #include "wspolne.h"
+
 
 class shared_memory
 {

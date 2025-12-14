@@ -7,19 +7,20 @@
 #include "wspolne.h"
 #include "pamiec_wspoldzielona.h"
 
-shared_memory::shared_memory()
+shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
 {
 	key_t klucz;
-	klucz = ftok(".", 'B');
+	klucz = ftok(".", 'B'); //utworzenie klucza do pamieci wspoldzielonej
 
-	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0666);
-	adres = (stan_tasmy*) shmat(id_pamieci, nullptr,0);
+	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0666); //utworzenie pamieci wspol dzielonej z prawami 0666
+	adres = (stan_tasmy*) shmat(id_pamieci, nullptr,0); //dolaczenie pamieci wspoldzielonej
 	pid_dyspozytora = getpid();
 }
 
-shared_memory::~shared_memory()
+
+shared_memory::~shared_memory() //destruktor ktory usuwa pamiec wspoldzielona gdy dyspozytor (wlasciciel) konczy prace
 {
-	shmdt(adres);
+	shmdt(adres); //odlaczenie segmentu pamieci systemowej (kazdy proces)
 
 	if (getpid() == pid_dyspozytora)
 	{
@@ -28,7 +29,7 @@ shared_memory::~shared_memory()
 
 }
 
-stan_tasmy* shared_memory::dane()
+stan_tasmy* shared_memory::dane() //metoda dane ktora zwraca adres pamieci wspoldzielonej
 {
 	return adres;
 }
