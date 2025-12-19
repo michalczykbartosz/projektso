@@ -1,0 +1,73 @@
+﻿#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <unistd.h>
+#include "kolejka.h"
+
+kolejka::kolejka()
+{
+	key_t klucz;
+	klucz = ftok(".", 'K');
+
+	pid_dyspozytora = getpid();
+
+	id_kolejka = msgget(klucz, IPC_CREAT | 0666);
+
+	if (id_kolejka == -1)
+	{
+		perror("Blad przy tworzeniu kolejki komunikatow!");
+		exit(1);
+	}
+
+}
+
+kolejka::~kolejka()
+{
+	if (getpid() == pid_dyspozytora)
+	{
+		msgctl(id_kolejka, IPC_RMID, nullptr);
+	}
+}
+
+void kolejka::wyslij(int id_nadawcy, const char* tekst)
+{
+	struct komunikat msg;
+
+	msg.mtype = 1;
+	msg.id_nadawcy = id_nadawcy;
+
+	strncpy(msg.text, tekst, sizeof(msg.text) - 1);
+	msg.text[sizeof(msg.text) - 1] = '\0';
+
+
+
+	if (msgsnd(id_kolejka,&msg, sizeof(komunikat) - sizeof(long int), 0) == -1)
+	{
+		perror("Blad wysylania komunikatu!");
+	}
+}
+
+komunikat kolejka::odbierz(int typ)
+{
+	komunikat msg;
+
+	if (msgrcv(id_kolejka, &msg, sizeof(msg) - sizeof(long), typ, 0) == -1)
+	{
+		perror("Blad odbierania komunikatu!");
+	}
+	return msg;
+}
+
+
+
+
+
+
+
+
+
+
+

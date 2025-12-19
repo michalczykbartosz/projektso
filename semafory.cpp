@@ -11,7 +11,7 @@ semafor::semafor(int ilosc)
 	key_t klucz;
 	pid_dyspozytora = getpid();
 
-	klucz = ftok(".", 'B'); //tworzenie klucza do zbioru semaforow
+	klucz = ftok(".", 'S'); //tworzenie klucza do zbioru semaforow
 
 	id_semafor = semget(klucz, ilosc, IPC_CREAT | 0666); //tworzenie zbioru semaforow 
 

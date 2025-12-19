@@ -20,3 +20,10 @@ struct stan_tasmy
 	double aktualna_waga_paczek_tasma;
 	bool dziala;
 };
+
+struct komunikat
+{
+	long int mtype;
+	int id_nadawcy;
+	char text[100];
+};

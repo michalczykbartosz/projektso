@@ -10,7 +10,7 @@
 shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
 {
 	key_t klucz;
-	klucz = ftok(".", 'B'); //utworzenie klucza do pamieci wspoldzielonej
+	klucz = ftok(".", 'P'); //utworzenie klucza do pamieci wspoldzielonej
 
 	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0666); //utworzenie pamieci wspol dzielonej z prawami 0666
 
