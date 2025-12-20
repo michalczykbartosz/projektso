@@ -7,7 +7,7 @@
 #include <unistd.h>
 #include "kolejka.h"
 
-kolejka::kolejka()
+kolejka::kolejka() //konstruktor - tworzenie klucza do kolejki komunikatow
 {
 	key_t klucz;
 	klucz = ftok(".", 'K');
@@ -24,7 +24,7 @@ kolejka::kolejka()
 
 }
 
-kolejka::~kolejka()
+kolejka::~kolejka() //destruktor ktory automatycznie usuwa kolejke komunikatow jesli jest wywolywany przez dyspozytora
 {
 	if (getpid() == pid_dyspozytora)
 	{
@@ -32,7 +32,7 @@ kolejka::~kolejka()
 	}
 }
 
-void kolejka::wyslij(int id_nadawcy, const char* tekst)
+void kolejka::wyslij(int id_nadawcy, const char* tekst) //funkcja dodajaca komuniakat do kolejki 
 {
 	struct komunikat msg;
 
@@ -50,7 +50,7 @@ void kolejka::wyslij(int id_nadawcy, const char* tekst)
 	}
 }
 
-komunikat kolejka::odbierz(int typ)
+komunikat kolejka::odbierz(int typ) //funkcja pobierania komunikatu z kolejki
 {
 	komunikat msg;
 
