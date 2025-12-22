@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <cstdio>
 #include "wspolne.h"
@@ -46,4 +47,17 @@ shared_memory::~shared_memory() //destruktor ktory usuwa pamiec wspoldzielona gd
 stan_tasmy* shared_memory::dane() //metoda dane ktora zwraca adres pamieci wspoldzielonej
 {
 	return adres;
+}
+
+void shared_memory::zapisz(int id_pracownika,char typ, double waga)
+{
+	int indeks = adres->tail;
+	adres->bufor[indeks].id_pracownika = id_pracownika;
+	adres->bufor[indeks].typ = typ;
+	adres->bufor[indeks].waga = waga;
+	adres->bufor[indeks].priorytet = false;
+
+	adres->tail = (adres->tail + 1) % MAX_PACZEK;
+	adres->aktualna_liczba_paczek++;
+	adres->aktualna_waga_paczek_tasma += waga;
 }

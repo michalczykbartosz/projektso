@@ -7,6 +7,7 @@ const char* bledy::komunikaty[] = {
 	"Liczba pracownikow musi byc wieksza niz 0!", //1
 	"Przekroczono limit pracownikow!", //2
 	"Liczba kierowcow musi byc wieksza niz 0!", //3
+	"Zla ilosc argumentow wywolania!" //4
 };
 
 int bledy::ilosc_bledow = sizeof(bledy::komunikaty) / sizeof(bledy::komunikaty[0]);

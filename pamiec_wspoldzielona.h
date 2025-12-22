@@ -17,4 +17,7 @@ public:
 	shared_memory();
 	~shared_memory();
 	stan_tasmy* dane();
+
+	void zapisz(int id_pracownika,char typ,double waga);
+	Paczka odczytaj();
 };

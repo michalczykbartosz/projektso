@@ -1,7 +1,7 @@
 #pragma once
 
 #define MAX_PACZEK 50
-#define MAX_WAGA 500
+#define UDZWIG 500
 
 struct Paczka
 {
