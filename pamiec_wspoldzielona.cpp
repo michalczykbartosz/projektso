@@ -10,8 +10,8 @@
 
 shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
 {
-	key_t klucz;
-	klucz = ftok(".", 'P'); //utworzenie klucza do pamieci wspoldzielonej
+	key_t klucz = 11111;
+	//klucz = ftok("main.cpp", 'P'); //utworzenie klucza do pamieci wspoldzielonej
 
 	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0666); //utworzenie pamieci wspol dzielonej z prawami 0666
 
@@ -35,12 +35,7 @@ shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
 
 shared_memory::~shared_memory() //destruktor ktory usuwa pamiec wspoldzielona gdy dyspozytor (wlasciciel) konczy prace
 {
-	shmdt(adres); //odlaczenie segmentu pamieci systemowej (kazdy proces)
-
-	if (getpid() == pid_dyspozytora)
-	{
-		shmctl(id_pamieci,IPC_RMID,nullptr);
-	}
+	shmdt(adres); //odlaczenie segmentu pamieci systemowej (kazdy proces
 
 }
 

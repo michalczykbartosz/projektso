@@ -75,12 +75,15 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
+    <ClCompile Include="bledy.cpp" />
     <ClCompile Include="kolejka.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pamiec_wspoldzielona.cpp" />
+    <ClCompile Include="pracownik.cpp" />
     <ClCompile Include="semafory.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="bledy.h" />
     <ClInclude Include="kolejka.h" />
     <ClInclude Include="pamiec_wspoldzielona.h" />
     <ClInclude Include="semafory.h" />

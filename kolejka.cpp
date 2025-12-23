@@ -9,8 +9,8 @@
 
 kolejka::kolejka() //konstruktor - tworzenie klucza do kolejki komunikatow
 {
-	key_t klucz;
-	klucz = ftok(".", 'K');
+	key_t klucz = 33333;
+	//klucz = ftok("main.cpp", 'K');
 
 	pid_dyspozytora = getpid();
 
@@ -28,7 +28,7 @@ kolejka::~kolejka() //destruktor ktory automatycznie usuwa kolejke komunikatow j
 {
 	if (getpid() == pid_dyspozytora)
 	{
-		msgctl(id_kolejka, IPC_RMID, nullptr);
+		//msgctl(id_kolejka, IPC_RMID, nullptr);
 	}
 }
 
@@ -61,6 +61,11 @@ komunikat kolejka::odbierz(int typ) //funkcja pobierania komunikatu z kolejki
 	return msg;
 }
 
+int kolejka::odbierz_nieblokujaco(int typ, komunikat& msg) //funkcja do sprawdzania czy w ogole jest jakis komunikat (dla ciezarowki) i nie blokuje
+
+{
+	return msgrcv(id_kolejka, &msg, sizeof(msg.text), typ, IPC_NOWAIT);
+}
 
 
 

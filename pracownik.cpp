@@ -8,6 +8,7 @@
 #include "bledy.h"
 #include <csignal>
 
+kolejka* globalna_kolejka = nullptr;
 bool czy_pracowac = true;
 
 double losuj_wage(double min, double max) //funkcja pomocnicza do losowania wagi paczki
@@ -19,11 +20,19 @@ double losuj_wage(double min, double max) //funkcja pomocnicza do losowania wagi
 void obsluga_P4(int sygnal) //funkcja do obslugi sygnalow dla  pracownika ekspresowego
 {
 	if (sygnal == SIGUSR2)
-	{ 
+	{
 		printf("Pracownik P4: Otrzymyalem sygnal 2 - Laduje pakiet ekspersowy\n");
 		double waga = losuj_wage(0.1, 24.9);
 		printf("Pracownik P4: Zaladowano pakiet (%.2f kg) do ciezarowki\n", waga);
+
+		if (globalna_kolejka != nullptr)
+		{
+			char txt[20];
+			sprintf(txt, "%f", waga);
+			globalna_kolejka->wyslij(4, txt);
+		}
 	}
+
 	else if (sygnal == SIGTERM || sygnal == SIGINT)
 	{ 
 		printf("Pracownik P4 zakonczyl prace\n");
@@ -39,10 +48,16 @@ void obsluga_pracownikow(int sygnal)
 	}
 }
 
+
 int main(int argc, char* argv[])
 {
 	if (argc < 2) bledy::rzuc_blad(4); //jezeli jest mniej niz 2 argumenty, program sie nie uruchomi
 	int id = atoi(argv[1]);
+	//inicjalizacja zasobow - semafory, kolejka komunikatow oraz pamiec wspoldzielona
+	semafor sem(4);
+	shared_memory pamiec;
+	kolejka kol;
+	globalna_kolejka = &kol;
 
 	if (id == 4) //jesli argumentem jest 4, czyli jest to pracownik ekspresowy 
 	{
@@ -61,10 +76,7 @@ int main(int argc, char* argv[])
 
 	signal(SIGTERM, obsluga_pracownikow);
 	signal(SIGINT, obsluga_pracownikow);
-	//inicjalizacja zasobow - semafory, kolejka komunikatow oraz pamiec wspoldzielona
-	semafor sem(3);
-	shared_memory pamiec;
-	kolejka kol;
+
 
 	srand(time(NULL) ^ (getpid() << 16));
 
@@ -105,8 +117,9 @@ int main(int argc, char* argv[])
 		{
 			sem.p(1);
 			sem.p(0);
+			stan_tasmy* tasma = pamiec.dane();
 
-			if (pamiec.dane()->aktualna_waga_paczek_tasma + waga <= UDZWIG)
+			if (tasma->aktualna_waga_paczek_tasma + waga <= UDZWIG)
 			{
 				pamiec.zapisz(id,typ_paczki,waga);
 				printf("Pracownik P%d: Dodalem %c (%.2f kg). Tasma: %d szt, %.1f/%.0f kg\n",
@@ -128,6 +141,7 @@ int main(int argc, char* argv[])
 	
 
 	
+
 
 
 

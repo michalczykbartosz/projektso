@@ -8,10 +8,10 @@
 
 semafor::semafor(int ilosc)
 {
-	key_t klucz;
+	key_t klucz = 22222;
 	pid_dyspozytora = getpid();
 
-	klucz = ftok(".", 'S'); //tworzenie klucza do zbioru semaforow
+	//klucz = ftok("main.cpp", 'S'); //tworzenie klucza do zbioru semaforow
 
 	id_semafor = semget(klucz, ilosc, IPC_CREAT | 0666); //tworzenie zbioru semaforow 
 

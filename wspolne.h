@@ -2,6 +2,9 @@
 
 #define MAX_PACZEK 50
 #define UDZWIG 500
+#define MAX_OBJETOSC_CIEZAROWKA 50.0
+#define MAX_WAGA_CIEZAROWKA 100
+#define LICZBA_CIEZAROWEK 3
 
 struct Paczka
 {

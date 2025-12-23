@@ -18,6 +18,8 @@ public:
 	
 	komunikat odbierz(int typ = 0);
 
+	int odbierz_nieblokujaco(int typ, komunikat& msg);
+
 	
 
 };
