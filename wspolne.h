@@ -1,10 +1,23 @@
 #pragma once
 
+#ifndef MAX_PACZEK
 #define MAX_PACZEK 50
+#endif
+#ifndef UDZWIG
 #define UDZWIG 500
+#endif
+#ifndef MAX_OBJETOSC_CIEZAROWKA
 #define MAX_OBJETOSC_CIEZAROWKA 1
+#endif
+#ifndef MAX_WAGA_CIEZAROWKA
 #define MAX_WAGA_CIEZAROWKA 100
+#endif
+#ifndef LICZBA_CIEZAROWEK
 #define LICZBA_CIEZAROWEK 3
+#endif
+#ifndef CZAS_JAZDY
+#define CZAS_JAZDY 15
+#endif
 
 struct Paczka
 {

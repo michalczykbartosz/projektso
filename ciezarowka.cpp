@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 		loguj(CIEZAROWKA,"CIEZARKOWA: Odjezdzam z waga %.2f\n", waga_ciezarowki);
 		przy_rampie = false;
 		sem.v(3);
-		if (czy_pracowac) sleep(5);
+		if (czy_pracowac) sleep(CZAS_JAZDY);
 			
 	}
 	return 0;
