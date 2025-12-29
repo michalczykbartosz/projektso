@@ -62,7 +62,7 @@ int main()
 
     if (fork() == 0)
     {
-        signal(SIGINT, SIG_IGN);
+        //signal(SIGINT, SIG_IGN);
         while (true)
         {
             char c = getchar();
@@ -91,14 +91,11 @@ int main()
         printf("%s\n", msg.text);
     }
     printf("Rozpoczynam procedure konczenia pracy magazynu\n");
-    system("pkill -SIGINT pracownik");
-    for (int i = 0; i < 5; i++) sem.v(1);
-    sleep(1);
-    system("pkill -SIGINT ciezarowka");
-    sem.v(2);
-    sem.v(2);
-    sem.v(0);
-    while (wait(NULL) > 0);
+    system("pkill -9 pracownik");
+    system("pkill -9 ciezarowka");
+    //while (wait(NULL) > 0);
+    system("ipcrm -a");
     printf("Magazyn zakonczyl prace");
+    kill(0, SIGKILL);
     return 0;
 }
