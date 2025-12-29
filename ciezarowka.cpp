@@ -7,6 +7,7 @@
 #include "kolejka.h"
 #include "bledy.h"
 #include <csignal>
+#include "logger.h"
 
 bool czy_pracowac = true;
 bool wymuszony_odjazd = false;
@@ -48,7 +49,7 @@ int main(int argc, char* argv[])
 	{
 		sem.p(3);
 		przy_rampie = true;
-		printf("Ciezarowka przy rampie\n");
+		loguj(CIEZAROWKA,"Ciezarowka przy rampie\n");
 		bool pelna = false;
 		wymuszony_odjazd = false;
 		double waga_ciezarowki = 0.0;
@@ -75,13 +76,13 @@ int main(int argc, char* argv[])
 			if (kol.odbierz_nieblokujaco(4, msg) != -1)
 			{
 				double waga_ekspresowych = atof(msg.text);
-				double objetosc_ekspresowych = 0.5;
+				double objetosc_ekspresowych = 0.2;
 
 				if (waga_ciezarowki + waga_ekspresowych <= MAX_WAGA_CIEZAROWKA && objetosc_ciezarowki + objetosc_ekspresowych <= MAX_OBJETOSC_CIEZAROWKA)
 				{
 					waga_ciezarowki += waga_ekspresowych;
 					objetosc_ciezarowki += objetosc_ekspresowych;
-					printf("CIEZAROWKA: Zaladaowano pakiet ekspres %.2f - waga calej ciezarowki: %.2f\n", waga_ekspresowych, waga_ciezarowki);
+					loguj(CIEZAROWKA,"CIEZAROWKA: Zaladaowano pakiet ekspres %.2f - waga calej ciezarowki: %.2f\n", waga_ekspresowych, waga_ciezarowki);
 				}
 
 			}
@@ -116,7 +117,7 @@ int main(int argc, char* argv[])
 				}
 				st->head = (st->head + 1) % MAX_PACZEK;
 
-				printf("CIEZAROWKA: Paczka %c (%.2f). Stan ciezarowki: %.2f/%.2f\n", p.typ, p.waga, waga_ciezarowki, (double)MAX_WAGA_CIEZAROWKA);
+				loguj(CIEZAROWKA,"CIEZAROWKA: Paczka %c (%.2f). Stan ciezarowki: %.2f/%.2f\n", p.typ, p.waga, waga_ciezarowki, (double)MAX_WAGA_CIEZAROWKA);
 
 				sem.v(0);
 				sem.v(1); 
@@ -128,7 +129,7 @@ int main(int argc, char* argv[])
 				sem.v(2);
 			}
 		}
-		printf("CIEZARKOWA: Odjezdzam z waga %.2f\n", waga_ciezarowki);
+		loguj(CIEZAROWKA,"CIEZARKOWA: Odjezdzam z waga %.2f\n", waga_ciezarowki);
 		przy_rampie = false;
 		sem.v(3);
 		if (czy_pracowac) sleep(5);

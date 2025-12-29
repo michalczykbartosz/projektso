@@ -14,7 +14,7 @@ public:
 	kolejka();
 	~kolejka();
 
-	void wyslij(int id_nadawcy,const char* tekst);
+	void wyslij(int typ,int id_nadawcy,const char* tekst);
 	
 	komunikat odbierz(int typ = 0);
 

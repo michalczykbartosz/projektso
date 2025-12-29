@@ -9,6 +9,7 @@
 #include "bledy.h"
 #include <cstring>
 #include <csignal>
+#include "logger.h"
 
 bool system_dziala = true;
 
@@ -88,14 +89,14 @@ int main()
     {
         komunikat msg = kol.odbierz(0);
         if (!system_dziala) break;
-        printf("%s\n", msg.text);
+        loguj(INFO,"%s\n", msg.text);
     }
-    printf("Rozpoczynam procedure konczenia pracy magazynu\n");
+    loguj(SYSTEM,"Rozpoczynam procedure konczenia pracy magazynu\n");
     system("pkill -9 pracownik");
     system("pkill -9 ciezarowka");
     //while (wait(NULL) > 0);
     system("ipcrm -a");
-    printf("Magazyn zakonczyl prace");
+    loguj(SYSTEM,"Magazyn zakonczyl prace");
     kill(0, SIGKILL);
     return 0;
 }

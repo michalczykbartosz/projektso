@@ -14,7 +14,7 @@ kolejka::kolejka() //konstruktor - tworzenie klucza do kolejki komunikatow
 
 	pid_dyspozytora = getpid();
 
-	id_kolejka = msgget(klucz, IPC_CREAT | 0666);
+	id_kolejka = msgget(klucz, IPC_CREAT | 0600);
 
 	if (id_kolejka == -1)
 	{
@@ -32,11 +32,11 @@ kolejka::~kolejka() //destruktor ktory automatycznie usuwa kolejke komunikatow j
 	}
 }
 
-void kolejka::wyslij(int id_nadawcy, const char* tekst) //funkcja dodajaca komuniakat do kolejki 
+void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst) //funkcja dodajaca komuniakat do kolejki 
 {
 	struct komunikat msg;
 
-	msg.mtype = 1;
+	msg.mtype = typ;
 	msg.id_nadawcy = id_nadawcy;
 
 	strncpy(msg.text, tekst, sizeof(msg.text) - 1);

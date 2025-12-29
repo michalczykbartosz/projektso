@@ -14,7 +14,7 @@ semafor::semafor(int ilosc)
 
 	//klucz = ftok("main.cpp", 'S'); //tworzenie klucza do zbioru semaforow
 
-	id_semafor = semget(klucz, ilosc, IPC_CREAT | 0666); //tworzenie zbioru semaforow 
+	id_semafor = semget(klucz, ilosc, IPC_CREAT | 0600); //tworzenie zbioru semaforow 
 
 	if (id_semafor == -1)
 	{

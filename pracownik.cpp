@@ -7,6 +7,7 @@
 #include "kolejka.h"
 #include "bledy.h"
 #include <csignal>
+#include "logger.h"
 
 kolejka* globalna_kolejka = nullptr;
 bool czy_pracowac = true;
@@ -26,21 +27,21 @@ void obsluga_P4(int sygnal) //funkcja do obslugi sygnalow dla  pracownika ekspre
 {
 	if (sygnal == SIGUSR2)
 	{
-		printf("Pracownik P4: Otrzymyalem sygnal 2 - Laduje pakiet ekspersowy\n");
+		loguj(P4,"Pracownik P4: Otrzymyalem sygnal 2 - Laduje pakiet ekspersowy\n");
 		double waga = losuj_wage(0.1, 24.9);
-		printf("Pracownik P4: Zaladowano pakiet (%.2f kg) do ciezarowki\n", waga);
+		loguj(P4,"Pracownik P4: Zaladowano pakiet (%.2f kg) do ciezarowki\n", waga);
 
 		if (globalna_kolejka != nullptr)
 		{
 			char txt[20];
 			sprintf(txt, "%f", waga);
-			globalna_kolejka->wyslij(4, txt);
+			globalna_kolejka->wyslij(4,4, txt);
 		}
 	}
 
 	else if (sygnal == SIGTERM || sygnal == SIGINT)
 	{
-		printf("Pracownik P4 zakonczyl prace\n");
+		loguj(P4,"Pracownik P4 zakonczyl prace\n");
 		exit(0);
 	}
 }
@@ -67,7 +68,7 @@ int main(int argc, char* argv[])
 
 	if (id == 4) //jesli argumentem jest 4, czyli jest to pracownik ekspresowy 
 	{
-		printf("Pracownik P4 (Ekspresowy) czeka na sygnaly\n");
+		loguj(P4,"Pracownik P4 (Ekspresowy) czeka na sygnaly\n");
 		
 		signal(SIGUSR2, obsluga_P4);
 		signal(SIGTERM, obsluga_P4);
@@ -109,7 +110,7 @@ int main(int argc, char* argv[])
 		break;
 	}
 
-	printf("Pracownik P%d: Zaczynam produkcje paczek typu: %c\n", id, typ_paczki);
+	loguj(PRACOWNIK,"Pracownik P%d: Zaczynam produkcje paczek typu: %c\n", id, typ_paczki);
 
 	while (czy_pracowac)
 	{
@@ -128,13 +129,13 @@ int main(int argc, char* argv[])
 			if (tasma->aktualna_waga_paczek_tasma + waga <= UDZWIG)
 			{
 				pamiec.zapisz(id,typ_paczki,waga);
-				printf("Pracownik P%d: Dodalem %c (%.2f kg). Tasma: %d szt, %.1f/%.0f kg\n",
+				loguj(PRACOWNIK,"Pracownik P%d: Dodalem %c (%.2f kg). Tasma: %d szt, %.1f/%.0f kg\n",
 					id, typ_paczki, waga, pamiec.dane()->aktualna_liczba_paczek, pamiec.dane()->aktualna_waga_paczek_tasma, (double)UDZWIG);
 
 				sem.v(0);
 				sem.v(2);
 				czy_dzwignie = true;
-				kol.wyslij(id, "Dodano paczke");
+				kol.wyslij(1,id, "Dodano paczke");
 			}
 			else
 			{

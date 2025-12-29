@@ -13,7 +13,7 @@ shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
 	key_t klucz = 11111;
 	//klucz = ftok("main.cpp", 'P'); //utworzenie klucza do pamieci wspoldzielonej
 
-	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0666); //utworzenie pamieci wspol dzielonej z prawami 0666
+	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0600); //utworzenie pamieci wspol dzielonej z prawami 0666
 
 	if (id_pamieci == -1)
 	{
