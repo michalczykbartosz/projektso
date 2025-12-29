@@ -59,6 +59,7 @@ int main(int argc, char* argv[])
 {
 	if (argc < 2) bledy::rzuc_blad(4); //jezeli jest mniej niz 2 argumenty, program sie nie uruchomi
 	int id = atoi(argv[1]);
+	srand(time(NULL) ^ (getpid() << 16));
 	//inicjalizacja zasobow - semafory, kolejka komunikatow oraz pamiec wspoldzielona
 	semafor sem(4);
 	shared_memory pamiec;
@@ -83,9 +84,6 @@ int main(int argc, char* argv[])
 
 	signal(SIGTERM, obsluga_pracownikow);
 	signal(SIGINT, obsluga_pracownikow);
-
-
-	srand(time(NULL) ^ (getpid() << 16));
 
 	char typ_paczki;
 	double min_waga, max_waga;

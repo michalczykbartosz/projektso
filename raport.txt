@@ -1,0 +1,30 @@
+[00:22:02] Ciezarowka przy rampie
+[00:22:02] Pracownik P1: Zaczynam produkcje paczek typu: A
+[00:22:02] Pracownik P4 (Ekspresowy) czeka na sygnaly
+[00:22:02] Pracownik P2: Zaczynam produkcje paczek typu: B
+[00:22:02] Pracownik P3: Zaczynam produkcje paczek typu: C
+[00:22:05] Pracownik P1: Dodalem A (2.61 kg). Tasma: 1 szt, 2.6/500 kg
+[00:22:05] Dodano paczke
+[00:22:05] CIEZAROWKA: Paczka A (2.61). Stan ciezarowki: 2.61/100.00
+[00:22:05] Pracownik P2: Dodalem B (9.88 kg). Tasma: 1 szt, 9.9/500 kg
+[00:22:05] Dodano paczke
+[00:22:05] CIEZAROWKA: Paczka B (9.88). Stan ciezarowki: 12.49/100.00
+[00:22:05] Pracownik P3: Dodalem C (24.55 kg). Tasma: 1 szt, 24.5/500 kg
+[00:22:05] Dodano paczke
+[00:22:05] CIEZAROWKA: Paczka C (24.55). Stan ciezarowki: 37.04/100.00
+[00:22:06] Pracownik P4: Otrzymyalem sygnal 2 - Laduje pakiet ekspersowy
+[00:22:06] Pracownik P4: Zaladowano pakiet (16.81 kg) do ciezarowki
+[00:22:08] Pracownik P1: Dodalem A (7.90 kg). Tasma: 1 szt, 7.9/500 kg
+[00:22:08] CIEZAROWKA: Paczka A (7.90). Stan ciezarowki: 44.94/100.00
+[00:22:08] Dodano paczke
+[00:22:08] CIEZAROWKA: Zaladaowano pakiet ekspres 16.81 - waga calej ciezarowki: 61.75
+[00:22:08] Pracownik P2: Dodalem B (14.41 kg). Tasma: 1 szt, 14.4/500 kg
+[00:22:08] Dodano paczke
+[00:22:08] CIEZAROWKA: Paczka B (14.41). Stan ciezarowki: 76.16/100.00
+[00:22:08] Pracownik P3: Dodalem C (24.69 kg). Tasma: 1 szt, 24.7/500 kg
+[00:22:08] Dodano paczke
+[00:22:08] CIEZARKOWA: Odjezdzam z waga 76.16
+[00:22:08] Ciezarowka przy rampie
+[00:22:08] CIEZAROWKA: Paczka C (24.69). Stan ciezarowki: 24.69/100.00
+[00:22:08] Rozpoczynam procedure konczenia pracy magazynu
+[00:22:08] Magazyn zakonczyl prace

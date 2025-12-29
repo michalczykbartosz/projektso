@@ -87,7 +87,7 @@ int main()
 
     while (system_dziala)
     {
-        komunikat msg = kol.odbierz(0);
+        komunikat msg = kol.odbierz(1);
         if (!system_dziala) break;
         loguj(INFO,"%s\n", msg.text);
     }

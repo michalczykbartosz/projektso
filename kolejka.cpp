@@ -64,7 +64,7 @@ komunikat kolejka::odbierz(int typ) //funkcja pobierania komunikatu z kolejki
 int kolejka::odbierz_nieblokujaco(int typ, komunikat& msg) //funkcja do sprawdzania czy w ogole jest jakis komunikat (dla ciezarowki) i nie blokuje
 
 {
-	return msgrcv(id_kolejka, &msg, sizeof(msg.text), typ, IPC_NOWAIT);
+	return msgrcv(id_kolejka, &msg, sizeof(msg) - sizeof(long), typ, IPC_NOWAIT);
 }
 
 
