@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <cstdio>
 #include <cstdlib>
+#include <cerrno>
 #include "semafory.h"
 
 semafor::semafor(int ilosc)
@@ -21,6 +22,7 @@ semafor::semafor(int ilosc)
 		exit(1);
 	}
 
+	/*
 	if (getpid() == pid_dyspozytora)
 	{
 		for (int i = 0; i < ilosc; i++)
@@ -33,17 +35,22 @@ semafor::semafor(int ilosc)
 		
 		}
 	}
+	*/
 
 
 }
 
+
 semafor::~semafor()
 {
+	/*
 	if (getpid() == pid_dyspozytora) //destruktor ktory usuwa zbior semaforow kiedy dyspozytor konczy prace
 	{
 		semctl(id_semafor, 0, IPC_RMID);
 	}
+	*/
 }
+
 
 void semafor::ustaw(int nr_semafor, int wartosc) //funkcja ktora ustawia semafor na dana wartosc
 {
@@ -62,10 +69,13 @@ void semafor::v(int nr_semafor) //operacja podniesienia semafora o 1
 	operacja.sem_flg = 0;
 	
 
-	if (semop(id_semafor, &operacja, 1) == -1)
+	while (semop(id_semafor, &operacja, 1) == -1)
 	{
-		perror("Blad operacji V semafora");
-		exit(1);
+		if (errno == EINTR) continue;
+		
+			perror("Blad operacji V semafora");
+			exit(1);
+		
 	}
 }
 
@@ -77,9 +87,12 @@ void semafor::p(int nr_semafor) //operacja zniesienia semafora o 1
 	operacja.sem_flg = 0;
 
 
-	if (semop(id_semafor, &operacja, 1) == -1)
+	while(semop(id_semafor, &operacja, 1) == -1)
 	{
-		perror("Blad operacji P semafora");
-		exit(1);
+		if (errno == EINTR) continue;
+		
+			perror("Blad operacji P semafora");
+			exit(1);
+		
 	}
 }

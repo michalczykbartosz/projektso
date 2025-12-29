@@ -10,6 +10,7 @@
 
 bool czy_pracowac = true;
 bool wymuszony_odjazd = false;
+bool przy_rampie = false;
 
 void pracowanie(int sygnal)
 {
@@ -22,9 +23,12 @@ void pracowanie(int sygnal)
 
 void ekspresowy_odjazd(int sygnal)
 {
-	if (sygnal == SIGUSR1)
+	if (sygnal == SIGUSR1 && przy_rampie)
 	{
-		wymuszony_odjazd = true;
+		if (przy_rampie)
+		{
+			wymuszony_odjazd = true;
+		}
 	}
 }
 
@@ -38,10 +42,12 @@ int main(int argc, char* argv[])
 	signal(SIGINT, pracowanie);
 	signal(SIGUSR1, ekspresowy_odjazd);
 
+	stan_tasmy* st = pam.dane();
 
-	while (czy_pracowac)
+	while (czy_pracowac || st->aktualna_liczba_paczek > 0)
 	{
 		sem.p(3);
+		przy_rampie = true;
 		printf("Ciezarowka przy rampie\n");
 		bool pelna = false;
 		wymuszony_odjazd = false;
@@ -49,13 +55,22 @@ int main(int argc, char* argv[])
 		double objetosc_ciezarowki = 0.0;
 
 
-		while (!pelna && czy_pracowac)
+		while (!pelna)
 		{
 			struct komunikat msg;
 			if (wymuszony_odjazd == true)
 			{
 				break;
 			}
+
+			sem.p(0);
+			if (!czy_pracowac && st->aktualna_liczba_paczek == 0)
+			{
+				sem.v(0);
+				break;
+			}
+
+			sem.v(0);
 
 			if (kol.odbierz_nieblokujaco(4, msg) != -1)
 			{
@@ -66,14 +81,13 @@ int main(int argc, char* argv[])
 				{
 					waga_ciezarowki += waga_ekspresowych;
 					objetosc_ciezarowki += objetosc_ekspresowych;
-					printf("CIEZAROWKA: Zaladaowano pakiet ekspres %.2f - waga calej ciezarowki: %.2f", waga_ekspresowych, waga_ciezarowki);
+					printf("CIEZAROWKA: Zaladaowano pakiet ekspres %.2f - waga calej ciezarowki: %.2f\n", waga_ekspresowych, waga_ciezarowki);
 				}
 
 			}
 			sem.p(2);
 			sem.p(0);
 
-			stan_tasmy* st = pam.dane();
 			Paczka p = st->bufor[st->head];
 
 			if (p.waga < 0.001)
@@ -115,11 +129,12 @@ int main(int argc, char* argv[])
 			}
 		}
 		printf("CIEZARKOWA: Odjezdzam z waga %.2f\n", waga_ciezarowki);
+		przy_rampie = false;
 		sem.v(3);
-		if (czy_pracowac) sleep(10);
+		if (czy_pracowac) sleep(5);
 			
-return 0;
 	}
+	return 0;
 }
 
 

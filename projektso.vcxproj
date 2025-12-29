@@ -76,6 +76,7 @@
   <PropertyGroup Label="UserMacros" />
   <ItemGroup>
     <ClCompile Include="bledy.cpp" />
+    <ClCompile Include="ciezarowka.cpp" />
     <ClCompile Include="kolejka.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pamiec_wspoldzielona.cpp" />

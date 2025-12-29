@@ -11,6 +11,11 @@
 kolejka* globalna_kolejka = nullptr;
 bool czy_pracowac = true;
 
+void obsluga_konca(int sig)
+{
+	czy_pracowac = false;
+}
+
 double losuj_wage(double min, double max) //funkcja pomocnicza do losowania wagi paczki
 {
 	double f = (double)rand() / RAND_MAX;
@@ -34,7 +39,7 @@ void obsluga_P4(int sygnal) //funkcja do obslugi sygnalow dla  pracownika ekspre
 	}
 
 	else if (sygnal == SIGTERM || sygnal == SIGINT)
-	{ 
+	{
 		printf("Pracownik P4 zakonczyl prace\n");
 		exit(0);
 	}
@@ -44,7 +49,7 @@ void obsluga_pracownikow(int sygnal)
 {
 	if (sygnal == SIGTERM || sygnal == SIGINT)
 	{
-		czy_pracowac = false; 
+		czy_pracowac = false;
 	}
 }
 
@@ -58,6 +63,7 @@ int main(int argc, char* argv[])
 	shared_memory pamiec;
 	kolejka kol;
 	globalna_kolejka = &kol;
+	signal(SIGINT, obsluga_konca);
 
 	if (id == 4) //jesli argumentem jest 4, czyli jest to pracownik ekspresowy 
 	{
@@ -113,7 +119,7 @@ int main(int argc, char* argv[])
 		double waga = losuj_wage(min_waga, max_waga);
 		bool czy_dzwignie = false;
 
-		while (!czy_dzwignie && czy_pracowac)
+		while (!czy_dzwignie)
 		{
 			sem.p(1);
 			sem.p(0);
@@ -138,13 +144,6 @@ int main(int argc, char* argv[])
 			}
 		}
 			
-	
-
-	
-
-
-
-
 
 	}
 
