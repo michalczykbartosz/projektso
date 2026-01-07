@@ -4,7 +4,7 @@
 #include <cstring>
 #include "logger.h"
 
-//predefiniowane zmienne do kolorowania tekstu w terminalu
+//predefiniowane kody ANSI do kolorowania tekstu w terminalu
 #define RESET   "\033[0m"
 #define RED     "\033[1;31m"
 #define GREEN   "\033[1;32m"
@@ -16,14 +16,18 @@
 //funkcja wypisujaca logi w konsoli oraz zapisująca do pliku wraz z czasem i kolorem
 void loguj(LogType typ, const char* format, ...)
 {
+	//obsluga czasu
 	time_t now = time(0); //pobieranie czasu
 	struct tm tstruct;
 	char time_buf[80]; //bufor na dokladny czas
 	tstruct = *localtime(&now); //konwertowanie czasu na strukture lokalna
 	strftime(time_buf, sizeof(time_buf), "[%H:%M:%S]", &tstruct); //formatowanie czasu
 
+
+	//wybor koloru
 	const char* kolor = RESET;
 
+	
 	switch (typ)
 	{
 	case INFO: kolor = RESET; break;
@@ -34,6 +38,7 @@ void loguj(LogType typ, const char* format, ...)
 	case BLAD: kolor = RED; break;
 	}
 
+	//wypisywanie na ekran
 	va_list args; 
 	va_start(args, format); //inicjalizacja listy argumentow
 	printf("%s %s", kolor, time_buf);  //wypisywanie koloru i czasu
@@ -41,15 +46,16 @@ void loguj(LogType typ, const char* format, ...)
 	printf("%s", RESET); //resetowanie koloru
 	va_end(args); //resetowanie listy argumentow
 
+	//zapisywanie do pliku
 	FILE* f = fopen("raport.txt", "a"); //otwarcie pliku w trybie "a"
 	if (f)
 	{
-		//zapisywanie czasu i tresci do pliku
-		va_start(args, format);
-		fprintf(f, "%s ", time_buf);
-		vfprintf(f, format, args);
-		va_end(args);
-		fclose(f);
+		
+		va_start(args, format); //ponowna inicjalizacja listy argumentow po przesunieciu wskaznika listy przez vprintf
+		fprintf(f, "%s ", time_buf); //zapis czasu do pliku
+		vfprintf(f, format, args); //zapis tresci do pliku
+		va_end(args); //czyszczenie listy
+		fclose(f); //zamkniecie strumienia pliku
 	}
 
 }

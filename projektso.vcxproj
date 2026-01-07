@@ -78,6 +78,7 @@
     <ClCompile Include="bledy.cpp" />
     <ClCompile Include="ciezarowka.cpp" />
     <ClCompile Include="kolejka.cpp" />
+    <ClCompile Include="logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pamiec_wspoldzielona.cpp" />
     <ClCompile Include="pracownik.cpp" />
@@ -86,6 +87,7 @@
   <ItemGroup>
     <ClInclude Include="bledy.h" />
     <ClInclude Include="kolejka.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="pamiec_wspoldzielona.h" />
     <ClInclude Include="semafory.h" />
     <ClInclude Include="wspolne.h" />
