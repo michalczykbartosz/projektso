@@ -7,16 +7,24 @@
 #include <cerrno>
 #include "semafory.h"
 
+
+/*
+semafor 0 - dostep do pamieci
+semafor 1 - wolne miejsca na tasmie
+semafor 2 - gotowe paczki do odbioru
+semafor 3 - rampa zeby tylko 1 ciezarowka byla
+*/
+
+//konstruktor tworzacy semafor 
 semafor::semafor(int ilosc,bool wlasciciel)
 {
-	czy_wlasciciel = wlasciciel;
-	key_t klucz;// = 22222;
-
+	czy_wlasciciel = wlasciciel; //ustawienie flagi czy_wlasciciel przez argument
+	key_t klucz;
 	klucz = ftok(".", 'S'); //tworzenie klucza do zbioru semaforow
 
 	id_semafor = semget(klucz, ilosc, IPC_CREAT | 0600); //tworzenie zbioru semaforow 
 
-	if (id_semafor == -1)
+	if (id_semafor == -1) //wypisanie bledu jesli tworzenie zbioru semaforow sie nie powiedzie
 	{
 		perror("Blad przy tworzeniu semaforow!");
 		exit(1);
@@ -25,25 +33,26 @@ semafor::semafor(int ilosc,bool wlasciciel)
 }
 
 
+//destruktor usuwajacy zbior semaforow jesli zostnaie wywolany przez wlasciciela (flaga czy_wlasciciel)
 semafor::~semafor()
 {
 	
-	if (czy_wlasciciel) //destruktor ktory usuwa zbior semaforow kiedy dyspozytor konczy prace
+	if (czy_wlasciciel) 
 	{
-		if (semctl(id_semafor, 0, IPC_RMID) == -1)
+		if (semctl(id_semafor, 0, IPC_RMID) == -1) //jesli usuwanie nie powiedzie sie, wypisywany jest blad
 		{
 			perror("Blad usuwania semaforow");
 		}
 		else
 		{
-			printf("Semafory poprawnie usuniete\n");
+			printf("Semafory poprawnie usuniete\n"); //wypisanie potwierdzenia usuniecia zbioru semaforow
 		}
 	}
 	
 }
 
 
-void semafor::ustaw(int nr_semafor, int wartosc) //funkcja ktora ustawia semafor na dana wartosc
+void semafor::ustaw(int nr_semafor, int wartosc) //funkcja ustawiajaca dany semafor na wybrana wartosc
 {
 	if (czy_wlasciciel)
 	{
@@ -55,6 +64,7 @@ void semafor::ustaw(int nr_semafor, int wartosc) //funkcja ktora ustawia semafor
 void semafor::v(int nr_semafor) //operacja podniesienia semafora o 1
 {
 	struct sembuf operacja;
+	//inicjalizacja zmiennych lokalnych
 	operacja.sem_num = nr_semafor;
 	operacja.sem_op = 1;
 	operacja.sem_flg = 0;
@@ -62,27 +72,28 @@ void semafor::v(int nr_semafor) //operacja podniesienia semafora o 1
 
 	while (semop(id_semafor, &operacja, 1) == -1)
 	{
-		if (errno == EINTR) continue;
+		if (errno == EINTR) continue; //ponowienie proby jesli przerwano przez sygnal
 		
-			perror("Blad operacji V semafora");
+			perror("Blad operacji V semafora"); //wypisanie bledu jesli operacja podniesienia sie nie powiedzie
 			exit(1);
 		
 	}
 }
 
-void semafor::p(int nr_semafor) //operacja zniesienia semafora o 1
+void semafor::p(int nr_semafor) //operacja opuszczenia semafora o 1
 {
 	struct sembuf operacja;
+	//inicjalizacja zmiennych lokalnych
 	operacja.sem_num = nr_semafor;
 	operacja.sem_op = -1;
 	operacja.sem_flg = 0;
 
 
-	while(semop(id_semafor, &operacja, 1) == -1)
+	while(semop(id_semafor, &operacja, 1) == -1) 
 	{
-		if (errno == EINTR) continue;
+		if (errno == EINTR) continue; //ponowienie proby jesli przerwano przez sygnal
 		
-			perror("Blad operacji P semafora");
+			perror("Blad operacji P semafora"); //wypisanie bledu jesli operacja opuszczenia sie nie powiedzie
 			exit(1);
 		
 	}

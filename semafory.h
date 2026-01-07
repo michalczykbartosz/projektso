@@ -6,17 +6,17 @@
 class semafor
 {
 private:
-	int id_semafor;
-	bool czy_wlasciciel;
+	int id_semafor; //id zbioru semaforow
+	bool czy_wlasciciel; //flaga sterujaca usuwaniem semaforow w destruktorze
 
 public:
-	semafor(int ilosc, bool wlasciciel = false);
+	semafor(int ilosc, bool wlasciciel = false); //konstruktor tworzacy zbior semaforow
 
-	~semafor();
+	~semafor(); //destruktor usuwajacy zbior semaforow jesli jest wywolywany przez wlasciciela
 
-	void ustaw(int nr_semafor, int wartosc);
+	void ustaw(int nr_semafor, int wartosc); //funkcja ustawiajaca wartosc semaforu
 
-	void v(int nr_semafor);
+	void v(int nr_semafor); //funkcja podnoszaca semafor o 1
 
-	void p(int nr_semafor);
+	void p(int nr_semafor); //funkcja opuszczajaca semafor o 1
 };

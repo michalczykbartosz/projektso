@@ -103,15 +103,7 @@ int main()
     while (wait(NULL) > 0);
     loguj(SYSTEM, "Procesy potomne zakonczone. Zwalnianie zasobow.\n");
 
-    /*
-    loguj(SYSTEM,"Rozpoczynam procedure konczenia pracy magazynu\n");
-    system("pkill -9 pracownik");
-    system("pkill -9 ciezarowka");
-    //while (wait(NULL) > 0);
-    system("ipcrm -a");
-    loguj(SYSTEM,"Magazyn zakonczyl prace");
-    kill(0, SIGKILL);
-    */
+  
     return 0;
 
 }
