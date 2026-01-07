@@ -8,11 +8,11 @@ class kolejka
 {
 private:
 	int id_kolejka; //systemowe id kolejki komunikatow
-	int pid_dyspozytora; //pid procesu glownego, tylko proces z tym pidem moze wywolac destruktor
+	bool czy_wlasciciel; //flaga sterujaca usuwaniem zasobu w destruktorze
 
 public:
-	kolejka(); //konstruktor tworzacy kolejke lub pobiera istniejaca
-	~kolejka(); //destruktor niszczacy kolejke jesli biezacy proces to pid_dyspozytora
+	kolejka(bool wlasciciel = false); //konstruktor tworzacy kolejke lub pobiera istniejaca
+	~kolejka(); //destruktor niszczacy kolejke jesli proces jest wlascicielem
 
 	void wyslij(int typ,int id_nadawcy,const char* tekst); /*funkcja wysylajaca sformatowany komunikat do kolejki: typ - kanał(1: logi, 4 : ekspres)
 	tekst - tresc wiadomosci*/

@@ -7,10 +7,10 @@ class semafor
 {
 private:
 	int id_semafor;
-	int pid_dyspozytora;
+	bool czy_wlasciciel;
 
 public:
-	semafor(int ilosc);
+	semafor(int ilosc, bool wlasciciel = false);
 
 	~semafor();
 

@@ -11,10 +11,10 @@ class shared_memory
 private:
 	int id_pamieci;
 	stan_tasmy* adres;
-	int pid_dyspozytora;
+	bool czy_wlasciciel;
 
 public:
-	shared_memory();
+	shared_memory(bool wlasciciel = false);
 	~shared_memory();
 	stan_tasmy* dane();
 

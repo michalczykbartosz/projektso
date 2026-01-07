@@ -8,10 +8,11 @@
 #include "wspolne.h"
 #include "pamiec_wspoldzielona.h"
 
-shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
+shared_memory::shared_memory(bool wlasciciel) //konstruktor pamieci wspoldzielonej
 {
-	key_t klucz = 11111;
-	//klucz = ftok("main.cpp", 'P'); //utworzenie klucza do pamieci wspoldzielonej
+	czy_wlasciciel = wlasciciel;
+	key_t klucz;// = 11111;
+	klucz = ftok(".", 'P'); //utworzenie klucza do pamieci wspoldzielonej
 
 	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0600); //utworzenie pamieci wspol dzielonej z prawami 0666
 
@@ -28,14 +29,24 @@ shared_memory::shared_memory() //konstruktor pamieci wspoldzielonej
 		perror("Blad dolaczania pamieci wspoldzielonej!");
 		exit(1);
 	}
-
-	pid_dyspozytora = getpid();
 }
 
 
 shared_memory::~shared_memory() //destruktor ktory usuwa pamiec wspoldzielona gdy dyspozytor (wlasciciel) konczy prace
 {
-	shmdt(adres); //odlaczenie segmentu pamieci systemowej (kazdy proces
+	shmdt(adres);//odlaczenie segmentu pamieci systemowej (kazdy proces)
+
+	if (czy_wlasciciel)
+	{
+		if (shmctl(id_pamieci, IPC_RMID, NULL) == -1)
+		{
+			perror("Blad usuwania pamieci wspoldzielonej");
+		}
+		else
+		{
+			printf("Poprawnie usunieto pamiec wspoldzielona\n");
+		}
+	}
 
 }
 

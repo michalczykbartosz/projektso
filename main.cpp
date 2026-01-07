@@ -21,9 +21,9 @@ void obsluga_konca(int sig)
 int main()
 {
     setbuf(stdout, NULL);
-    semafor sem(4);
-    shared_memory pamiec;
-    kolejka kol;
+    semafor sem(4,true);
+    shared_memory pamiec(true);
+    kolejka kol(true);
 
     signal(SIGINT, obsluga_konca);
     stan_tasmy* s = pamiec.dane();
@@ -48,7 +48,7 @@ int main()
             char id_str[10];
             sprintf(id_str, "%d", i);
             execl("./pracownik", "pracownik", id_str, NULL);
-            exit(1);
+            _exit(1);
         }
     }
 
@@ -57,11 +57,12 @@ int main()
         if (fork() == 0)
         {
             execl("./ciezarowka", "ciezarowka", NULL);
-            exit(1);
+            _exit(1);
         }
     }
 
-    if (fork() == 0)
+    int pid_klawiatury = fork();
+    if (pid_klawiatury == 0)
     {
         //signal(SIGINT, SIG_IGN);
         while (true)
@@ -79,10 +80,10 @@ int main()
             else if (c == '3')
             {
                 kill(getppid(), SIGINT);
-                exit(0);
+                _exit(0);
             }
         }
-        exit(0);
+        _exit(0);
     }
 
     while (system_dziala)
@@ -91,6 +92,18 @@ int main()
         if (!system_dziala) break;
         loguj(INFO,"%s\n", msg.text);
     }
+    //nowa poprawna logika usuwania
+    loguj(SYSTEM, "Konzce prace magazynu\n");
+    s->dziala = false;
+    kill(pid_klawiatury, SIGKILL);
+    system("pkill pracownik");
+    system("pkill ciezarowka");
+    system("pkill -9 pracownik");
+    system("pkill -9 ciezarowka");
+    while (wait(NULL) > 0);
+    loguj(SYSTEM, "Procesy potomne zakonczone. Zwalnianie zasobow.\n");
+
+    /*
     loguj(SYSTEM,"Rozpoczynam procedure konczenia pracy magazynu\n");
     system("pkill -9 pracownik");
     system("pkill -9 ciezarowka");
@@ -98,5 +111,7 @@ int main()
     system("ipcrm -a");
     loguj(SYSTEM,"Magazyn zakonczyl prace");
     kill(0, SIGKILL);
+    */
     return 0;
+
 }

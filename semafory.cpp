@@ -7,12 +7,12 @@
 #include <cerrno>
 #include "semafory.h"
 
-semafor::semafor(int ilosc)
+semafor::semafor(int ilosc,bool wlasciciel)
 {
-	key_t klucz = 22222;
-	pid_dyspozytora = getpid();
+	czy_wlasciciel = wlasciciel;
+	key_t klucz;// = 22222;
 
-	//klucz = ftok("main.cpp", 'S'); //tworzenie klucza do zbioru semaforow
+	klucz = ftok(".", 'S'); //tworzenie klucza do zbioru semaforow
 
 	id_semafor = semget(klucz, ilosc, IPC_CREAT | 0600); //tworzenie zbioru semaforow 
 
@@ -22,39 +22,30 @@ semafor::semafor(int ilosc)
 		exit(1);
 	}
 
-	/*
-	if (getpid() == pid_dyspozytora)
-	{
-		for (int i = 0; i < ilosc; i++)
-		{
-			if(semctl(id_semafor, i, SETVAL,1)== -1) //ustawianie kazdego semafora w zbiorze na 1
-			{
-				perror("Blad ustawiania wartosci semaforow!");
-				exit(1);
-			}
-		
-		}
-	}
-	*/
-
-
 }
 
 
 semafor::~semafor()
 {
-	/*
-	if (getpid() == pid_dyspozytora) //destruktor ktory usuwa zbior semaforow kiedy dyspozytor konczy prace
+	
+	if (czy_wlasciciel) //destruktor ktory usuwa zbior semaforow kiedy dyspozytor konczy prace
 	{
-		semctl(id_semafor, 0, IPC_RMID);
+		if (semctl(id_semafor, 0, IPC_RMID) == -1)
+		{
+			perror("Blad usuwania semaforow");
+		}
+		else
+		{
+			printf("Semafory poprawnie usuniete\n");
+		}
 	}
-	*/
+	
 }
 
 
 void semafor::ustaw(int nr_semafor, int wartosc) //funkcja ktora ustawia semafor na dana wartosc
 {
-	if (getpid() == pid_dyspozytora)
+	if (czy_wlasciciel)
 	{
 		semctl(id_semafor, nr_semafor, SETVAL, wartosc);
 	}

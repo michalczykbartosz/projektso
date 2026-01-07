@@ -5,14 +5,15 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
+#include <cerrno>
 #include "kolejka.h"
 
-kolejka::kolejka() //konstruktor - tworzenie klucza do kolejki komunikatow
+kolejka::kolejka(bool wlasciciel) //konstruktor - tworzenie klucza do kolejki komunikatow
 {
-	key_t klucz = 33333;
-	//klucz = ftok("main.cpp", 'K');
+	czy_wlasciciel = wlasciciel;
+	key_t klucz;// = 33333;
+	klucz = ftok(".", 'K');
 
-	pid_dyspozytora = getpid(); //ustawienie pid_dyspozytora na proces tworzacy kolejke
 
 	id_kolejka = msgget(klucz, IPC_CREAT | 0600); //tworzenie kolejki
 
@@ -25,11 +26,18 @@ kolejka::kolejka() //konstruktor - tworzenie klucza do kolejki komunikatow
 
 }
 
-kolejka::~kolejka() //destruktor ktory automatycznie usuwa kolejke komunikatow jesli jest wywolywany przez dyspozytora
+kolejka::~kolejka() //destruktor ktory automatycznie usuwa kolejke komunikatow jesli jest wywolywany przez wlasciciela
 {
-	if (getpid() == pid_dyspozytora)
+	if (czy_wlasciciel)
 	{
-		//msgctl(id_kolejka, IPC_RMID, nullptr);
+		if (msgctl(id_kolejka, IPC_RMID, nullptr) == -1)
+		{
+			perror("Blad usuwania kolejki komunikatow");
+		}
+		else
+		{
+			printf("Kolejka komunikatow usunieta poprawnie\n");
+		}
 	}
 }
 
@@ -60,7 +68,10 @@ komunikat kolejka::odbierz(int typ)
 	//jesli nie udalo sie odebrac wiadomosci, wypisujemy blad
 	if (msgrcv(id_kolejka, &msg, sizeof(msg) - sizeof(long), typ, 0) == -1)
 	{
-		perror("Blad odbierania komunikatu!"); //wypisanie bledu
+		if (errno != EINTR) //wypisz tylko jesli nie jest to przerwanie sygnalem
+		{
+			perror("Blad odbierania komunikatu");
+		}
 	}
 	return msg;
 }
