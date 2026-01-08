@@ -32,8 +32,17 @@ int main(int argc, char* argv[])
         if (liczba_ciezarowek < 1 || liczba_ciezarowek >10) //sprawdzdenie poprawnosci danych
         {
             bledy::rzuc_blad(3); //wypisanie bledu
-            exit(1);
         }
+    }
+
+    if (MAX_PACZEK <= 0) //walidacja MAX_PACZEK
+    {
+        bledy::rzuc_blad(5);
+    }
+
+    if (UDZWIG <= 0 || MAX_WAGA_CIEZAROWKA <= 0 || MAX_OBJETOSC_CIEZAROWKA <= 0 || CZAS_JAZDY <= 0) //walidacja stalych z wspolne.h
+    {
+        bledy::rzuc_blad(6);
     }
 
     setbuf(stdout, NULL); //wylaczenie bufora na stdout tak zeby nie czekalo na uzbieranie bloku tekstu
@@ -120,6 +129,7 @@ int main(int argc, char* argv[])
     kill(pid_klawiatury, SIGKILL);
     system("pkill pracownik");
     system("pkill ciezarowka");
+    sleep(1);
     system("pkill -9 pracownik");
     system("pkill -9 ciezarowka");
     while (wait(NULL) > 0); //petla oczekujaca na zakonczenie procesow potomnych

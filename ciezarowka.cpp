@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 			sem.v(0); //zwolnienie mutexu po sprawdzeniu
 
 			//obsluga pakietow ekspresowych uzywa IPC_NOWAIT aby nie czekala na pakiety ekspresowe gdy ich nie ma
-			if (kol.odbierz_nieblokujaco(4, msg) != -1) 
+			while (!pelna && kol.odbierz_nieblokujaco(4, msg) != -1) 
 			{
 				double waga_ekspresowych = atof(msg.text); //konwersja tekstu na liczbe
 				double objetosc_ekspresowych = 0.2; //stala objetosc ekspresowych
@@ -103,11 +103,20 @@ int main(int argc, char* argv[])
 					kol.wyslij(4, msg.id_nadawcy, msg.text); //wyslanie komunikatu
 					loguj(CIEZAROWKA, "CIEZAROWKA: Ekspres %.2f sie nie zmiescil, wymuszam odjazd\n",waga_ekspresowych); 
 					pelna = true; //wymuszenie odjazdu
+					break; //przerwanie petli
+				}
+				if (pelna)//jesli ekspresy zapelnily ciezarowke petla ladowania ekspresowych zostjae przerwana
+				{
+					break;
 				}
 
 			}
-			//obsluga paczek standardowo
-			//sem.p(2); //oczekiwanie na paczke na tasmie
+			if (pelna)//jesli ekspresy zapelnily ciezarowke petla ladowania wszystkich paczek zostaje przerwana
+			{
+				break;
+			}
+
+			//obsluga paczek standardowo - oczekiwanie z tasmy
 			if (sem.p_przerywalne(2) == false)
 			{
 				if (wymuszony_odjazd) //jezeli funkcja zwraca false znaczy ze przerwal ja sygnal
@@ -116,6 +125,15 @@ int main(int argc, char* argv[])
 				}
 				continue; //jesli to inny sygnal, probujemy dalej
 			}
+
+			//sprawdzenie czy podczas czekania na zwykla paczke nie pojawil sie pakiet ekspresowy
+			if (kol.odbierz_nieblokujaco(4, msg) != -1)
+			{
+				sem.v(2); //oddanie semafora (odrzucenie zwyklej paczki)
+				kol.wyslij(4, msg.id_nadawcy, msg.text); //zwrot wiadomosci z paczka do kolejki aby nie przepadla
+				continue; //powrot do petli ekspresowych paczek
+			}
+
 			sem.p(0); //mutex pamieci
 
 			Paczka p = st->bufor[st->head];
