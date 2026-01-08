@@ -11,61 +11,66 @@
 #include <csignal>
 #include "logger.h"
 
-bool system_dziala = true;
+bool system_dziala = true; //flaga sterujaca symulacja
 
-void obsluga_konca(int sig)
+//funkcja ktora sygnalizuje koniec pracy po przyjeciu sygnalu SIGINT
+void obsluga_konca(int sig) 
 {
     system_dziala = false;
 }
 
 int main()
 {
-    setbuf(stdout, NULL);
+    setbuf(stdout, NULL); //wylaczenie bufora na stdout tak zeby nie czekalo na uzbieranie bloku tekstu
+    //inicjalizacja zasobow systemowych
     semafor sem(4,true);
     shared_memory pamiec(true);
     kolejka kol(true);
 
-    signal(SIGINT, obsluga_konca);
+    signal(SIGINT, obsluga_konca); //rejestracja sygnalu SIGINT do zakonczenia symulacji
     stan_tasmy* s = pamiec.dane();
     memset(s, 0, sizeof(stan_tasmy));
     s->dziala = true;
 
+    //inicjalizacja poczatkowych zmiennych symulacji
     pamiec.dane()->head = 0;
     pamiec.dane()->tail = 0;
     pamiec.dane()->aktualna_liczba_paczek = 0;
     pamiec.dane()->aktualna_waga_paczek_tasma = 0.0;
     pamiec.dane()->dziala = true;
 
-    sem.ustaw(0, 1);            //mutex
-    sem.ustaw(1, MAX_PACZEK);   //wolne
-    sem.ustaw(2, 0);            //zajete
+    //ustawienie poczatkowych wartosci semaforow
+    sem.ustaw(0, 1);            //mutex pamieci
+    sem.ustaw(1, MAX_PACZEK);   //wolna tasma
+    sem.ustaw(2, 0);            //zajeta tasma (paczka)
     sem.ustaw(3, 1);            //rampa
 
+    //petla tworzaca pracownikow
     for (int i = 1; i <= 4; i++)
     {
         if (fork() == 0)
         {
-            char id_str[10];
-            sprintf(id_str, "%d", i);
-            execl("./pracownik", "pracownik", id_str, NULL);
-            _exit(1);
+            char id_str[10]; //bufor nazwy do logow
+            sprintf(id_str, "%d", i); //wypisanie nazwy pracownika
+            execl("./pracownik", "pracownik", id_str, NULL); //wykonanie programu pracownik
+            _exit(1); //bezpieczne wyjscie gdy execl nie zadziala
         }
     }
 
-    for (int i = 0; i < LICZBA_CIEZAROWEK; i++)
+    //petla tworzaca ciezarowki
+    for (int i = 0; i < LICZBA_CIEZAROWEK; i++) 
     {
         if (fork() == 0)
         {
-            execl("./ciezarowka", "ciezarowka", NULL);
-            _exit(1);
+            execl("./ciezarowka", "ciezarowka", NULL); //wykonanie programu ciezarowka
+            _exit(1); //bezpieczne wyjscie gdy execl nie zadziala
         }
     }
 
-    int pid_klawiatury = fork();
+    int pid_klawiatury = fork(); //utworzenie procesu do obslugi klawiatury i zapisanie jego pidu
     if (pid_klawiatury == 0)
     {
-        //signal(SIGINT, SIG_IGN);
-        while (true)
+        while (true) //petla odczytujaca wejscie z klawiatury
         {
             char c = getchar();
 
@@ -86,21 +91,23 @@ int main()
         _exit(0);
     }
 
+    //petla czekajaca na wiadomosci z kolejki komunikatow
     while (system_dziala)
     {
         komunikat msg = kol.odbierz(1);
-        if (!system_dziala) break;
-        loguj(INFO,"%s\n", msg.text);
+        if (!system_dziala) break; //przerwanie petli gdy symulacja sie konczy
+        loguj(INFO,"%s\n", msg.text); //koncowy log
     }
     //nowa poprawna logika usuwania
     loguj(SYSTEM, "Konzce prace magazynu\n");
-    s->dziala = false;
+    s->dziala = false; //zmiana stanu flagi dziala
+    //zabijanie procesow
     kill(pid_klawiatury, SIGKILL);
     system("pkill pracownik");
     system("pkill ciezarowka");
     system("pkill -9 pracownik");
     system("pkill -9 ciezarowka");
-    while (wait(NULL) > 0);
+    while (wait(NULL) > 0); //petla oczekujaca na zakonczenie procesow potomnych
     loguj(SYSTEM, "Procesy potomne zakonczone. Zwalnianie zasobow.\n");
 
   
