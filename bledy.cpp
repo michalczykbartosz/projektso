@@ -6,7 +6,7 @@ const char* bledy::komunikaty[] = {
 	"Wystapil nieznany blad!", //0
 	"Liczba pracownikow musi byc wieksza niz 0!", //1
 	"Przekroczono limit pracownikow!", //2
-	"Liczba kierowcow musi byc wieksza niz 0!", //3
+	"Liczba ciezarowek musi byc wieksza niz 0!", //3
 	"Zla ilosc argumentow wywolania!" //4
 };
 

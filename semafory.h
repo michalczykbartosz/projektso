@@ -19,4 +19,6 @@ public:
 	void v(int nr_semafor); //funkcja podnoszaca semafor o 1
 
 	void p(int nr_semafor); //funkcja opuszczajaca semafor o 1
+
+	bool p_przerywalne(int nr_semafor); //funkcja opuszczajaca semafor o 1 ktora zwraca false jesli zostanie przerwana przez sygnal
 };

@@ -107,7 +107,15 @@ int main(int argc, char* argv[])
 
 			}
 			//obsluga paczek standardowo
-			sem.p(2); //oczekiwanie na paczke na tasmie
+			//sem.p(2); //oczekiwanie na paczke na tasmie
+			if (sem.p_przerywalne(2) == false)
+			{
+				if (wymuszony_odjazd) //jezeli funkcja zwraca false znaczy ze przerwal ja sygnal
+				{
+					break; //przerwanie petli ladowania i odjazd
+				}
+				continue; //jesli to inny sygnal, probujemy dalej
+			}
 			sem.p(0); //mutex pamieci
 
 			Paczka p = st->bufor[st->head];

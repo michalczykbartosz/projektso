@@ -98,3 +98,23 @@ void semafor::p(int nr_semafor) //operacja opuszczenia semafora o 1
 		
 	}
 }
+
+bool semafor::p_przerywalne(int nr_semafor)
+{
+	struct sembuf operacja;
+	//inicjalizacja zmiennych lokalnych
+	operacja.sem_num = nr_semafor;
+	operacja.sem_op = -1;
+	operacja.sem_flg = 0;
+
+	if (semop(id_semafor, &operacja, 1) == -1)
+	{
+		if (errno == EINTR) //jezeli odebrano sygnal podczas opuszczania semafora zwracane jest false
+		{
+			return false;
+		}
+		perror("Blad operacji P semafora");
+		exit(1);
+	}
+	return true;
+}

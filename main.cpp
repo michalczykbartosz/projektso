@@ -19,8 +19,23 @@ void obsluga_konca(int sig)
     system_dziala = false;
 }
 
-int main()
+
+
+int main(int argc, char* argv[])
 {
+    int liczba_ciezarowek = LICZBA_CIEZAROWEK; //domyslna wartosc ze wspolne.h
+
+    //obsluga argumentu wywolania
+    if (argc > 1)
+    {
+        liczba_ciezarowek = atoi(argv[1]);
+        if (liczba_ciezarowek < 1 || liczba_ciezarowek >10) //sprawdzdenie poprawnosci danych
+        {
+            bledy::rzuc_blad(3); //wypisanie bledu
+            exit(1);
+        }
+    }
+
     setbuf(stdout, NULL); //wylaczenie bufora na stdout tak zeby nie czekalo na uzbieranie bloku tekstu
     //inicjalizacja zasobow systemowych
     semafor sem(4,true);
@@ -58,7 +73,7 @@ int main()
     }
 
     //petla tworzaca ciezarowki
-    for (int i = 0; i < LICZBA_CIEZAROWEK; i++) 
+    for (int i = 0; i < liczba_ciezarowek; i++) 
     {
         if (fork() == 0)
         {
