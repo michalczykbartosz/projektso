@@ -121,7 +121,28 @@ int main(int argc, char* argv[])
 			{
 				if (wymuszony_odjazd) //jezeli funkcja zwraca false znaczy ze przerwal ja sygnal
 				{
-					break; //przerwanie petli ladowania i odjazd
+					loguj(CIEZAROWKA, "CIEZAROWK: Otrzymalem rozkaz natychmiastowego odjazdu, sprawdzam czy sa ekspresy\n");
+					struct komunikat msg;
+					while (!pelna && kol.odbierz_nieblokujaco(4, msg) != -1) //sprawdzenie czy sa ekspresy do zaladowania
+					{
+						double waga_ekspresowych = atof(msg.text);
+						double objetosc_ekspresowych = 0.2;
+
+						//odjazd z ekspresem
+						if (waga_ciezarowki + waga_ekspresowych <= MAX_WAGA_CIEZAROWKA && objetosc_ciezarowki + objetosc_ekspresowych <= MAX_OBJETOSC_CIEZAROWKA)
+						{
+							waga_ciezarowki += waga_ekspresowych;
+							objetosc_ciezarowki += objetosc_ekspresowych;
+							loguj(CIEZAROWKA, "CIEZAROWKA: Zaladowalem ostatni ekspres %.2f przed odjazdem - laczna waga: %.2f\n", waga_ekspresowych, waga_ciezarowki);
+						}
+						else //nie zmiesci sie na ciezarowke - oddanie ekspresu do kolejki
+						{
+							kol.wyslij(4, msg.id_nadawcy, msg.text);
+							loguj(CIEZAROWKA, "CIEZAROWKA: Ekspres %.2f sie nie zmiescil\n",waga_ekspresowych);
+							break;
+						}
+					}
+					break;
 				}
 				continue; //jesli to inny sygnal, probujemy dalej
 			}

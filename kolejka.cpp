@@ -52,10 +52,24 @@ void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst)
 	strncpy(msg.text, tekst, sizeof(msg.text) - 1); //kopiowanie tekstu do wiadomosci kolejki
 	msg.text[sizeof(msg.text) - 1] = '\0'; //upewnienie sie ze na koncu wiadomosci jest "\0"
 
+	//zabezpieczenie przepelnienia kolejki, typ 1 (logi) sa w trybie nieblokujacym, typ 4 (ekspresowe) w blokujacym
+	int flags;
+	if (typ == 1)
+	{
+		flags = IPC_NOWAIT; //logi - nie czekaj gdy kolejka jest pelna
+	}
+	else
+	{
+		flags = 0; //ekspresy - czekaj na wolne miejsce
+	}
 
 	//jesli nie udalo sie wyslac wiadomosci, wypisujemy blad (rozmiar to wielkosc struktury - pole mtype)
-	if (msgsnd(id_kolejka,&msg, sizeof(komunikat) - sizeof(long int), 0) == -1)
+	if (msgsnd(id_kolejka,&msg, sizeof(komunikat) - sizeof(long int), flags) == -1)
 	{
+		if (errno = EAGAIN && typ == 1)
+		{
+			return; //odrzucenie logu
+		}
 		perror("Blad wysylania komunikatu!"); //wypisanie bledu
 	}
 }

@@ -13,13 +13,17 @@
 
 bool system_dziala = true; //flaga sterujaca symulacja
 
+//funkcja zbierajaca procesy zombie
+void obsluga_sigchld(int sig)
+{
+    while (waitpid(-1, NULL, WNOHANG) > 0); //WNOHANG - nie oczekuj tylko sprawdz i wroc
+}
+
 //funkcja ktora sygnalizuje koniec pracy po przyjeciu sygnalu SIGINT
 void obsluga_konca(int sig) 
 {
     system_dziala = false;
 }
-
-
 
 int main(int argc, char* argv[])
 {
@@ -52,6 +56,7 @@ int main(int argc, char* argv[])
     kolejka kol(true);
 
     signal(SIGINT, obsluga_konca); //rejestracja sygnalu SIGINT do zakonczenia symulacji
+    signal(SIGCHLD, obsluga_sigchld); //rejestracja sygnalu SIGCHLD do asynchronicznego zbierania procesow zombie
     stan_tasmy* s = pamiec.dane();
     memset(s, 0, sizeof(stan_tasmy));
     s->dziala = true;
@@ -122,6 +127,34 @@ int main(int argc, char* argv[])
         if (!system_dziala) break; //przerwanie petli gdy symulacja sie konczy
         loguj(INFO,"%s\n", msg.text); //koncowy log
     }
+
+    loguj(SYSTEM, "Koncze prace magazynu\n");
+    //zabezpieczenie dostepu do pamieci
+    sem.p(0);
+    s->dziala = false;
+    sem.v(0);
+    //lagodne zakonczenie procesow
+    loguj(SYSTEM, "Wysylam SIGTERM do procesow\n");
+    kill(pid_klawiatury, SIGTERM);
+    system("pkill -TERM pracownik");
+    system("pkill -TERM ciezarowka");
+    loguj(SYSTEM, "Czekam 3 sekundy na zakonczenie procesow\n");
+    sleep(3);
+    //wymuszenie zakonczenia procesow ktore sie nie zakonczyly
+    loguj(SYSTEM, "Wymuszam zakonczenie procesow ktorych nie udalo sie zamknac\n");
+    kill(pid_klawiatury, SIGKILL);
+    system("pkill -9 pracownik");
+    system("pkill -9 ciezarowka");
+    //koncowe sprzatanie procesow "zombie"
+    loguj(SYSTEM, "Koncze pozostale procesy zombie\n");
+    while (waitpid(-1, NULL, WNOHANG) > 0);
+    loguj(SYSTEM, "Wszystkie procesy potomne zakonczone. Zwalnianie zasobow\n");
+
+
+
+
+
+    /*
     //nowa poprawna logika usuwania
     loguj(SYSTEM, "Konzce prace magazynu\n");
     s->dziala = false; //zmiana stanu flagi dziala
@@ -134,7 +167,7 @@ int main(int argc, char* argv[])
     system("pkill -9 ciezarowka");
     while (wait(NULL) > 0); //petla oczekujaca na zakonczenie procesow potomnych
     loguj(SYSTEM, "Procesy potomne zakonczone. Zwalnianie zasobow.\n");
-
+    */
   
     return 0;
 
