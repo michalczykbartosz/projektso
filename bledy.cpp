@@ -6,7 +6,7 @@ const char* bledy::komunikaty[] = {
 	"Wystapil nieznany blad!", //0
 	"Liczba pracownikow musi byc wieksza niz 0!", //1
 	"Przekroczono limit pracownikow!", //2
-	"Liczba ciezarowek musi byc wieksza niz 0!", //3
+	"Bledna liczba ciezarowek!", //3
 	"Zla ilosc argumentow wywolania!", //4
 	"MAX_PACZEK musi byc > 0 !", //5
 	"Co najmniej 1 z wartosci UDZWIG, MAX_WAGA_CIEZAROWKA, MAX_OBJETOSC_CIEZAROWKA lub CZAS_JAZDY jest <=0" //6

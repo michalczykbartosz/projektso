@@ -56,7 +56,10 @@ int main(int argc, char* argv[])
 		//podjazd pod rampe
 		sem.p(3); //opuszczenie semafora (semafor nr. 3 kontroluje czy jest ciezarowka przy rampie)
 		przy_rampie = true;
-		loguj(CIEZAROWKA,"Ciezarowka przy rampie\n");
+		if (czy_pracowac) //ciezarowka podjezdza pod rampe tylko gdy magazyn pracuje
+		{
+			loguj(CIEZAROWKA, "Ciezarowka przy rampie\n");
+		}
 		//resetowanie zmiennych dla nowej ciezaorwki
 		bool pelna = false;
 		wymuszony_odjazd = false;
@@ -202,8 +205,11 @@ int main(int argc, char* argv[])
 				sem.v(2); //oddanie semafora, paczka zostanie na tasmie dla nastepnej ciezarowki
 			}
 		}
-		//odjazd ciezarowki
-		loguj(CIEZAROWKA,"CIEZARKOWA: Odjezdzam z waga %.2f\n", waga_ciezarowki);
+		//odjazd ciezarowki (w logach nie pokazuja sie ciezaorwki ktore nie zaladowaly nic)
+		if (waga_ciezarowki > 0.01)
+		{
+			loguj(CIEZAROWKA, "CIEZARKOWA: Odjezdzam z waga %.2f\n", waga_ciezarowki);
+		}
 		przy_rampie = false;
 		sem.v(3); //zwolnienie rampy
 		if (czy_pracowac) sleep(CZAS_JAZDY); //symulacja podrozy ciezarowki

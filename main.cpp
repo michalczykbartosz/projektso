@@ -10,8 +10,10 @@
 #include <cstring>
 #include <csignal>
 #include "logger.h"
+#include <vector>
 
 bool system_dziala = true; //flaga sterujaca symulacja
+pid_t pid_klawiatury = -1; //pid procesu klawiatury
 
 //funkcja zbierajaca procesy zombie
 void obsluga_sigchld(int sig)
@@ -23,6 +25,10 @@ void obsluga_sigchld(int sig)
 void obsluga_konca(int sig) 
 {
     system_dziala = false;
+    if (pid_klawiatury > 0)//zabicie procesu klawiatury aby nie blokowal sie getchar()
+    {
+        kill(pid_klawiatury, SIGKILL);
+    }
 }
 
 int main(int argc, char* argv[])
@@ -33,7 +39,7 @@ int main(int argc, char* argv[])
     if (argc > 1)
     {
         liczba_ciezarowek = atoi(argv[1]);
-        if (liczba_ciezarowek < 1 || liczba_ciezarowek >10) //sprawdzdenie poprawnosci danych
+        if (liczba_ciezarowek < 1 || liczba_ciezarowek >10000) //sprawdzdenie poprawnosci danych
         {
             bledy::rzuc_blad(3); //wypisanie bledu
         }
@@ -96,7 +102,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    int pid_klawiatury = fork(); //utworzenie procesu do obslugi klawiatury i zapisanie jego pidu
+     pid_klawiatury = fork(); //utworzenie procesu do obslugi klawiatury i zapisanie jego pidu
     if (pid_klawiatury == 0)
     {
         while (true) //petla odczytujaca wejscie z klawiatury
@@ -129,20 +135,23 @@ int main(int argc, char* argv[])
     }
 
     loguj(SYSTEM, "Koncze prace magazynu\n");
+    if (pid_klawiatury > 0) //zabicie najpierw procesu klawiatury aby getchar() sie nie zwiesil
+    {
+        kill(pid_klawiatury, SIGKILL);
+        waitpid(pid_klawiatury, NULL, 0); //czekanie na zakonczenie
+    }
     //zabezpieczenie dostepu do pamieci
     sem.p(0);
     s->dziala = false;
     sem.v(0);
     //lagodne zakonczenie procesow
     loguj(SYSTEM, "Wysylam SIGTERM do procesow\n");
-    kill(pid_klawiatury, SIGTERM);
     system("pkill -TERM pracownik");
     system("pkill -TERM ciezarowka");
     loguj(SYSTEM, "Czekam 3 sekundy na zakonczenie procesow\n");
     sleep(3);
     //wymuszenie zakonczenia procesow ktore sie nie zakonczyly
     loguj(SYSTEM, "Wymuszam zakonczenie procesow ktorych nie udalo sie zamknac\n");
-    kill(pid_klawiatury, SIGKILL);
     system("pkill -9 pracownik");
     system("pkill -9 ciezarowka");
     //koncowe sprzatanie procesow "zombie"

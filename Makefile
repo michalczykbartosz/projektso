@@ -29,7 +29,7 @@ ciezarowka: ciezarowka.cpp semafory.cpp pamiec_wspoldzielona.cpp kolejka.cpp ble
 
 
 run: clean all
-	./main
+	./main $(LICZBA_CIEZAROWEK)
 
 
 clean:
