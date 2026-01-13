@@ -22,11 +22,17 @@ semafor::semafor(int ilosc,bool wlasciciel)
 	key_t klucz;
 	klucz = ftok(".", 'S'); //tworzenie klucza do zbioru semaforow
 
+	if (klucz == -1) //wypisanie bledu jesli nie udalo sie stworzyc klucza
+	{
+		perror("Blad ftok() przy semaforach");
+		exit(1);
+	}
+
 	id_semafor = semget(klucz, ilosc, IPC_CREAT | 0600); //tworzenie zbioru semaforow 
 
 	if (id_semafor == -1) //wypisanie bledu jesli tworzenie zbioru semaforow sie nie powiedzie
 	{
-		perror("Blad przy tworzeniu semaforow!");
+		perror("Blad przy tworzeniu semaforow!"); 
 		exit(1);
 	}
 
@@ -56,7 +62,10 @@ void semafor::ustaw(int nr_semafor, int wartosc) //funkcja ustawiajaca dany sema
 {
 	if (czy_wlasciciel)
 	{
-		semctl(id_semafor, nr_semafor, SETVAL, wartosc);
+		if (semctl(id_semafor, nr_semafor, SETVAL, wartosc) == -1) //wypisanie bledu jesli nie udalo sie ustawic wartosci semafora
+		{
+			perror("Blad ustawiania wartosci semafora");
+		}
 	}
 }
 

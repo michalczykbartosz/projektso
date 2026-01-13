@@ -14,6 +14,12 @@ shared_memory::shared_memory(bool wlasciciel) //konstruktor pamieci wspoldzielon
 	key_t klucz;// = 11111;
 	klucz = ftok(".", 'P'); //utworzenie klucza do pamieci wspoldzielonej
 
+	if (klucz == -1)// wypisanie bledu jesli nie udalo sie stworzyc klucza
+	{
+		perror("Blad ftok() dla pamieci wspoldzielonej");
+		exit(1);
+	}
+
 	id_pamieci = shmget(klucz, sizeof(stan_tasmy), IPC_CREAT | 0600); //utworzenie pamieci wspol dzielonej z prawami 0666
 
 	if (id_pamieci == -1)
@@ -24,9 +30,15 @@ shared_memory::shared_memory(bool wlasciciel) //konstruktor pamieci wspoldzielon
 
 	adres = (stan_tasmy*) shmat(id_pamieci, nullptr,0); //dolaczenie pamieci wspoldzielonej
 
-	if (adres == (void*)-1)
+	if (adres == (void*)-1) //wypisanie bledu jesli nie udalo sie dolaczyc pamieci wspoldzielonej
 	{
 		perror("Blad dolaczania pamieci wspoldzielonej!");
+		exit(1);
+
+		if (czy_wlasciciel)//usuniecie pamieci jesli nie udalo sie jej dolaczyc
+		{
+			shmctl(id_pamieci, IPC_RMID, NULL);
+		}
 		exit(1);
 	}
 }
@@ -34,7 +46,10 @@ shared_memory::shared_memory(bool wlasciciel) //konstruktor pamieci wspoldzielon
 
 shared_memory::~shared_memory() //destruktor ktory usuwa pamiec wspoldzielona gdy dyspozytor (wlasciciel) konczy prace
 {
-	shmdt(adres);//odlaczenie segmentu pamieci systemowej (kazdy proces)
+	if (shmdt(adres) == -1)//odlaczenie segmentu pamieci systemowej (kazdy proces)
+	{
+		perror("Blad odlaczania pamieci wspoldzielonej");
+	}
 
 	if (czy_wlasciciel)
 	{

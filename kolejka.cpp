@@ -14,6 +14,12 @@ kolejka::kolejka(bool wlasciciel) //konstruktor - tworzenie klucza do kolejki ko
 	key_t klucz;// = 33333;
 	klucz = ftok(".", 'K');
 
+	if (klucz == -1)
+	{
+		perror("Blad ftok() przy kolejce komunikatow");
+		exit(1);
+	}
+
 
 	id_kolejka = msgget(klucz, IPC_CREAT | 0600); //tworzenie kolejki
 
@@ -66,7 +72,7 @@ void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst)
 	//jesli nie udalo sie wyslac wiadomosci, wypisujemy blad (rozmiar to wielkosc struktury - pole mtype)
 	if (msgsnd(id_kolejka,&msg, sizeof(komunikat) - sizeof(long int), flags) == -1)
 	{
-		if (errno = EAGAIN && typ == 1)
+		if (errno == EAGAIN && typ == 1)
 		{
 			return; //odrzucenie logu
 		}
@@ -78,6 +84,7 @@ void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst)
 komunikat kolejka::odbierz(int typ) 
 {
 	komunikat msg;
+	memset(&msg, 0, sizeof(msg)); //zerowanie pamieci przed odebraniem
 
 	//jesli nie udalo sie odebrac wiadomosci, wypisujemy blad
 	if (msgrcv(id_kolejka, &msg, sizeof(msg) - sizeof(long), typ, 0) == -1)

@@ -55,7 +55,10 @@ void loguj(LogType typ, const char* format, ...)
 		fprintf(f, "%s ", time_buf); //zapis czasu do pliku
 		vfprintf(f, format, args); //zapis tresci do pliku
 		va_end(args); //czyszczenie listy
-		fclose(f); //zamkniecie strumienia pliku
+		if (fclose(f) == -1) //zamkniecie strumienia pliku
+		{
+			perror("Blad zamykania pliku");
+		}
 	}
 
 }
