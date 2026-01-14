@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     if (argc > 1)
     {
         liczba_ciezarowek = atoi(argv[1]);
-        if (liczba_ciezarowek < 1 || liczba_ciezarowek >10000) //sprawdzdenie poprawnosci danych
+        if (liczba_ciezarowek < 1 || liczba_ciezarowek >20000) //sprawdzdenie poprawnosci danych
         {
             bledy::rzuc_blad(3); //wypisanie bledu
         }
@@ -80,42 +80,79 @@ int main(int argc, char* argv[])
     sem.ustaw(2, 0);            //zajeta tasma (paczka)
     sem.ustaw(3, 1);            //rampa
 
+    //wektory przechowujace pidy wszystkich procesow potomnych
+    std::vector<pid_t> pidy_pracownikow;
+    pid_t pid_p4 = -1; //pid pracownika p4
+    pid_t pgid_ciezarowek = 0;
+
     //petla tworzaca pracownikow
     for (int i = 1; i <= 4; i++)
     {
-        if (fork() == 0)
+        pid_t pid = fork();
+        if (pid == 0)
         {
             char id_str[10]; //bufor nazwy do logow
-            sprintf(id_str, "%d", i); //wypisanie nazwy pracownika
+            sprintf(id_str, "%d", i);//wypisanie nazwy pracownika
             execl("./pracownik", "pracownik", id_str, NULL); //wykonanie programu pracownik
             _exit(1); //bezpieczne wyjscie gdy execl nie zadziala
         }
-    }
-
-    //petla tworzaca ciezarowki
-    for (int i = 0; i < liczba_ciezarowek; i++) 
-    {
-        if (fork() == 0)
+        else if (pid > 0)
         {
-            execl("./ciezarowka", "ciezarowka", NULL); //wykonanie programu ciezarowka
-            _exit(1); //bezpieczne wyjscie gdy execl nie zadziala
+            pidy_pracownikow.push_back(pid); //zapisanie w wektorze pidu pracownika
+            if (i == 4)
+            {
+                pid_p4 = pid; //zapisanie pidu pracownika ekspresowego
+                nice(0); //nadanie wyzszego priorytetu dla pracownika ekspresowego
+            }
         }
     }
 
-     pid_klawiatury = fork(); //utworzenie procesu do obslugi klawiatury i zapisanie jego pidu
+    printf("Uruchamianie pierwszej ciezarowki\n");
+    pid_t pid_pierwszej = fork();
+
+    if (pid_pierwszej == 0)
+    {
+        setpgid(0, 0);
+        nice(19); //minimalny priorytet procesu
+        execl("./ciezarowka", "ciezarowka", NULL);
+        _exit(1);
+    }
+    else if (pid_pierwszej > 0)
+    {
+        pgid_ciezarowek = pid_pierwszej;
+        setpgid(pid_pierwszej, pgid_ciezarowek);
+    }
+    else
+    {
+        perror("Blad fork() dla pierwszej cieazarowki");
+        return 1;
+    }
+
+    pid_klawiatury = fork();
+
     if (pid_klawiatury == 0)
     {
         while (true) //petla odczytujaca wejscie z klawiatury
         {
-            char c = getchar();
+            int c = getchar();
+            if (c == '\n') continue; //ignorowanie znaku entera
+            if (c == EOF) break; //zabezpiecznei przed bledem strumienia
 
             if (c == '1')
             {
-                system("pkill -SIGUSR1 ciezarowka");
+                if (pgid_ciezarowek > 0)
+                {
+                    kill(-pgid_ciezarowek, SIGUSR1);
+                    loguj(INFO, "Wyslano sygnal SIGUSR do grupy %d\n", pgid_ciezarowek);
+                }
             }
             else if (c == '2')
             {
-                system("pkill -f 'pracownik 4' -SIGUSR2");
+                if (pid_p4 > 0)
+                {
+                    kill(pid_p4, SIGUSR2);
+                    loguj(SYSTEM, "Wysłano SIGUSR2 do pracownika P4\n");
+                }
             }
             else if (c == '3')
             {
@@ -125,6 +162,34 @@ int main(int argc, char* argv[])
         }
         _exit(0);
     }
+
+    //petla tworzaca ciezarowki
+    if (liczba_ciezarowek > 1)
+    {
+        for (int i = 1; i < liczba_ciezarowek; i++)
+        {
+            pid_t pid = fork();
+
+            if (pid < 0)
+            {
+                fprintf(stderr, "Limit procesow osiagniety przy ciezarowce nr %d\n", i);
+                break;
+            }
+            if (pid == 0)
+            {
+                setpgid(0, pgid_ciezarowek);
+                nice(19); //minimalny priorytet
+                execl("./ciezarowka", "ciezarowka", NULL);
+                _exit(1);
+            }
+            else if (pid > 0)
+            {
+                setpgid(pid, pgid_ciezarowek);
+            }
+        }
+    }
+
+
 
     //petla czekajaca na wiadomosci z kolejki komunikatow
     while (system_dziala)
@@ -140,43 +205,38 @@ int main(int argc, char* argv[])
         kill(pid_klawiatury, SIGKILL);
         waitpid(pid_klawiatury, NULL, 0); //czekanie na zakonczenie
     }
-    //zabezpieczenie dostepu do pamieci
+    //zabezpieczenie dostepu do pamieci i ustawienie flagi ze magazyn zakonczyl prace
     sem.p(0);
     s->dziala = false;
     sem.v(0);
     //lagodne zakonczenie procesow
     loguj(SYSTEM, "Wysylam SIGTERM do procesow\n");
-    system("pkill -TERM pracownik");
-    system("pkill -TERM ciezarowka");
+    for (size_t i = 0; i < pidy_pracownikow.size(); i++)
+    {
+        kill(pidy_pracownikow[i], SIGTERM); //zabijanie wszystkich pracownikow z wektora
+    }
+    if (pgid_ciezarowek > 0)
+    {
+        kill(-pgid_ciezarowek, SIGTERM);//zabijamy cala grupe ciezarowek
+    }
     loguj(SYSTEM, "Czekam 3 sekundy na zakonczenie procesow\n");
     sleep(3);
     //wymuszenie zakonczenia procesow ktore sie nie zakonczyly
     loguj(SYSTEM, "Wymuszam zakonczenie procesow ktorych nie udalo sie zamknac\n");
-    system("pkill -9 pracownik");
-    system("pkill -9 ciezarowka");
+    for (size_t i = 0; i < pidy_pracownikow.size(); i++)
+    {
+        kill(pidy_pracownikow[i], SIGKILL);
+    }
+
+    if (pgid_ciezarowek > 0)
+    {
+        kill(-pgid_ciezarowek, SIGKILL);
+    }
     //koncowe sprzatanie procesow "zombie"
     loguj(SYSTEM, "Koncze pozostale procesy zombie\n");
     while (waitpid(-1, NULL, WNOHANG) > 0);
     loguj(SYSTEM, "Wszystkie procesy potomne zakonczone. Zwalnianie zasobow\n");
 
-
-
-
-
-    /*
-    //nowa poprawna logika usuwania
-    loguj(SYSTEM, "Konzce prace magazynu\n");
-    s->dziala = false; //zmiana stanu flagi dziala
-    //zabijanie procesow
-    kill(pid_klawiatury, SIGKILL);
-    system("pkill pracownik");
-    system("pkill ciezarowka");
-    sleep(1);
-    system("pkill -9 pracownik");
-    system("pkill -9 ciezarowka");
-    while (wait(NULL) > 0); //petla oczekujaca na zakonczenie procesow potomnych
-    loguj(SYSTEM, "Procesy potomne zakonczone. Zwalnianie zasobow.\n");
-    */
   
     return 0;
 
