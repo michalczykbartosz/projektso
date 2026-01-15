@@ -212,7 +212,23 @@ int main(int argc, char* argv[])
 		}
 		przy_rampie = false;
 		sem.v(3); //zwolnienie rampy
-		if (czy_pracowac) sleep(CZAS_JAZDY); //symulacja podrozy ciezarowki
+		//symulacja podrozy ciezarowki - zabezpieczona tak zeby nie przerywal podrozy sygnal
+		if (czy_pracowac)
+		{
+			loguj(INFO, "Ciezarowka wyrusza w trase na %d s\n", CZAS_JAZDY);
+
+			unsigned int czas_do_spania = CZAS_JAZDY;
+
+			while (czas_do_spania > 0 && czy_pracowac)
+			{
+				czas_do_spania = sleep(czas_do_spania);
+			}
+
+			if (czy_pracowac)
+			{
+				loguj(INFO, "Ciezarowka wrocila z trasy\n");
+			}
+		}
 			
 	}
 	return 0;
