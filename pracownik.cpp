@@ -12,12 +12,13 @@
 kolejka* globalna_kolejka = nullptr; //utworzenie zasobu globalnej kolejki
 bool czy_pracowac = true; //flaga sterujaca glowna petla pracownikow
 
-
+/*
 //funkcja ktora sygnalizuje koniec pracy po przyjeciu sygnalu SIGINT
 void obsluga_konca(int sig)
 {
 	czy_pracowac = false;
 }
+*/
 
 //funkcja pomocnicza do losowania wagi paczki
 double losuj_wage(double min, double max) 
@@ -65,11 +66,11 @@ int main(int argc, char* argv[])
 	int id = atoi(argv[1]); //konwersja tekstu na liczbe int
 	srand(time(NULL) ^ (getpid() << 16)); //inicjalizacja seedu generatora liczb pseudolosowych
 	//inicjalizacja zasobow - semafory, kolejka komunikatow oraz pamiec wspoldzielona
-	semafor sem(4);
+	semafor sem(5);
 	shared_memory pamiec;
 	kolejka kol;
 	globalna_kolejka = &kol;
-	signal(SIGINT, obsluga_konca); //zarejestrowanie sygnalu konca pracy
+	//signal(SIGINT, obsluga_konca); //zarejestrowanie sygnalu konca pracy
 
 	if (id == 4) //jesli id == 4 jest to pracownik ekspresowy P4
 	{
@@ -118,7 +119,7 @@ int main(int argc, char* argv[])
 
 	while (czy_pracowac) //glowna petla pracy zwyklych pracownikow
 	{
-		sleep(3);
+		//sleep(2);
 		if (!czy_pracowac) break; //jesli czy_pracowac == false od razu przerywamy petle
 
 		double waga = losuj_wage(min_waga, max_waga); //losowanie wagi

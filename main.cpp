@@ -57,7 +57,7 @@ int main(int argc, char* argv[])
 
     setbuf(stdout, NULL); //wylaczenie bufora na stdout tak zeby nie czekalo na uzbieranie bloku tekstu
     //inicjalizacja zasobow systemowych
-    semafor sem(4,true);
+    semafor sem(5,true);
     shared_memory pamiec(true);
     kolejka kol(true);
 
@@ -65,7 +65,6 @@ int main(int argc, char* argv[])
     signal(SIGCHLD, obsluga_sigchld); //rejestracja sygnalu SIGCHLD do asynchronicznego zbierania procesow zombie
     stan_tasmy* s = pamiec.dane();
     memset(s, 0, sizeof(stan_tasmy));
-    s->dziala = true;
 
     //inicjalizacja poczatkowych zmiennych symulacji
     pamiec.dane()->head = 0;
@@ -79,11 +78,12 @@ int main(int argc, char* argv[])
     sem.ustaw(1, MAX_PACZEK);   //wolna tasma
     sem.ustaw(2, 0);            //zajeta tasma (paczka)
     sem.ustaw(3, 1);            //rampa
+    sem.ustaw(4, 150);          //miejsca w kolejce komunikatow
 
     //wektory przechowujace pidy wszystkich procesow potomnych
     std::vector<pid_t> pidy_pracownikow;
     pid_t pid_p4 = -1; //pid pracownika p4
-    pid_t pgid_ciezarowek = 0;
+    pid_t pgid_ciezarowek = 0; //pid grupy ciezarowek
 
     //petla tworzaca pracownikow
     for (int i = 1; i <= 4; i++)
@@ -108,11 +108,11 @@ int main(int argc, char* argv[])
     }
 
     printf("Uruchamianie pierwszej ciezarowki\n");
-    pid_t pid_pierwszej = fork();
+    pid_t pid_pierwszej = fork(); 
 
     if (pid_pierwszej == 0)
     {
-        setpgid(0, 0);
+        setpgid(0, 0); //zalozenie grupy procesow
         nice(19); //minimalny priorytet procesu
         execl("./ciezarowka", "ciezarowka", NULL);
         _exit(1);
@@ -128,17 +128,17 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    pid_klawiatury = fork();
+    pid_klawiatury = fork(); //uruchomienie osobnego procesu dla klawiatury
 
     if (pid_klawiatury == 0)
     {
         while (true) //petla odczytujaca wejscie z klawiatury
         {
-            int c = getchar();
-            if (c == '\n') continue; //ignorowanie znaku entera
-            if (c == EOF) break; //zabezpiecznei przed bledem strumienia
+            int x = getchar();
+            if (x == '\n') continue; //ignorowanie znaku entera
+            if (x == EOF) break; //zabezpiecznei przed bledem strumienia
 
-            if (c == '1')
+            if (x == '1')
             {
                 if (pgid_ciezarowek > 0)
                 {
@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
                     loguj(INFO, "Wyslano sygnal SIGUSR do grupy %d\n", pgid_ciezarowek);
                 }
             }
-            else if (c == '2')
+            else if (x == '2')
             {
                 if (pid_p4 > 0)
                 {
@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
                     loguj(SYSTEM, "Wysłano SIGUSR2 do pracownika P4\n");
                 }
             }
-            else if (c == '3')
+            else if (x == '3')
             {
                 kill(getppid(), SIGINT);
                 _exit(0);
@@ -177,14 +177,14 @@ int main(int argc, char* argv[])
             }
             if (pid == 0)
             {
-                setpgid(0, pgid_ciezarowek);
+                setpgid(0, pgid_ciezarowek); //przypisanie do grupy procesow
                 nice(19); //minimalny priorytet
                 execl("./ciezarowka", "ciezarowka", NULL);
                 _exit(1);
             }
             else if (pid > 0)
             {
-                setpgid(pid, pgid_ciezarowek);
+                setpgid(pid, pgid_ciezarowek); //zabezpieczajace przypisanie do grupy procesow
             }
         }
     }
@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
     {
         kill(pid_klawiatury, SIGKILL);
         waitpid(pid_klawiatury, NULL, 0); //czekanie na zakonczenie
-    }
+    }   
     //zabezpieczenie dostepu do pamieci i ustawienie flagi ze magazyn zakonczyl prace
     sem.p(0);
     s->dziala = false;

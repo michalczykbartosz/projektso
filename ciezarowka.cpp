@@ -29,17 +29,14 @@ void ekspresowy_odjazd(int sygnal)
 {
 	if (sygnal == SIGUSR1 && przy_rampie)
 	{
-		if (przy_rampie)
-		{
-			wymuszony_odjazd = true; //flaga przerywajaca petle ladowania
-		}
+		wymuszony_odjazd = true; //flaga przerywajaca petle ladowania
 	}
 }
 
 int main(int argc, char* argv[])
 {
 	//inicjalizacja zasobow systemowych
-	semafor sem(4);
+	semafor sem(5);
 	shared_memory pam;
 	kolejka kol;
 
@@ -124,7 +121,7 @@ int main(int argc, char* argv[])
 			{
 				if (wymuszony_odjazd) //jezeli funkcja zwraca false znaczy ze przerwal ja sygnal
 				{
-					loguj(CIEZAROWKA, "CIEZAROWK: Otrzymalem rozkaz natychmiastowego odjazdu, sprawdzam czy sa ekspresy\n");
+					loguj(CIEZAROWKA, "CIEZAROWKA: Otrzymalem rozkaz natychmiastowego odjazdu, sprawdzam czy sa ekspresy\n");
 					struct komunikat msg;
 					while (!pelna && kol.odbierz_nieblokujaco(4, msg) != -1) //sprawdzenie czy sa ekspresy do zaladowania
 					{
@@ -215,13 +212,14 @@ int main(int argc, char* argv[])
 		//symulacja podrozy ciezarowki - zabezpieczona tak zeby nie przerywal podrozy sygnal
 		if (czy_pracowac)
 		{
-			loguj(INFO, "Ciezarowka wyrusza w trase na %d s\n", CZAS_JAZDY);
+			loguj(INFO, "CIEZAROWKA: wyruszam w trase na %d s\n", CZAS_JAZDY);
 
 			unsigned int czas_do_spania = CZAS_JAZDY;
 
 			while (czas_do_spania > 0 && czy_pracowac)
 			{
 				czas_do_spania = sleep(czas_do_spania);
+
 			}
 
 			if (czy_pracowac)

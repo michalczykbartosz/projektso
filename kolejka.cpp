@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <cerrno>
 #include "kolejka.h"
+#include "semafory.h"
 
 kolejka::kolejka(bool wlasciciel) //konstruktor - tworzenie klucza do kolejki komunikatow
 {
@@ -58,6 +59,9 @@ void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst)
 	strncpy(msg.text, tekst, sizeof(msg.text) - 1); //kopiowanie tekstu do wiadomosci kolejki
 	msg.text[sizeof(msg.text) - 1] = '\0'; //upewnienie sie ze na koncu wiadomosci jest "\0"
 
+	semafor sem(5); //podlaczenie sie do zbioru semaforow
+	sem.p(4); //opuszczenie semaforu (czekanie jesli kolejka jest pelna)
+
 	//zabezpieczenie przepelnienia kolejki, typ 1 (logi) sa w trybie nieblokujacym, typ 4 (ekspresowe) w blokujacym
 	int flags;
 	if (typ == 1)
@@ -77,6 +81,7 @@ void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst)
 			return; //odrzucenie logu
 		}
 		perror("Blad wysylania komunikatu!"); //wypisanie bledu
+		sem.v(4);//oddanie semaforu po bledize
 	}
 }
 
@@ -94,13 +99,23 @@ komunikat kolejka::odbierz(int typ)
 			perror("Blad odbierania komunikatu");
 		}
 	}
+
+	semafor sem(5);
+	sem.v(4);
 	return msg;
 }
 //funkcja odbierania komunikatu z kolejki do sprawdzania czy jest pakiet ekspresowy, tak aby nie blokowalo pracy ciezarowki
 int kolejka::odbierz_nieblokujaco(int typ, komunikat& msg) 
 
 {
-	return msgrcv(id_kolejka, &msg, sizeof(msg) - sizeof(long), typ, IPC_NOWAIT);
+	int wynik=  msgrcv(id_kolejka, &msg, sizeof(msg) - sizeof(long), typ, IPC_NOWAIT);
+
+	if (wynik != 1)
+	{
+		semafor sem(5);
+		sem.v(4);
+	}
+	return wynik;
 }
 
 

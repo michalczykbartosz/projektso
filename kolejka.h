@@ -3,6 +3,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include "wspolne.h"
+class semafor;
 
 class kolejka
 {
