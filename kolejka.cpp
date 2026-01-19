@@ -76,12 +76,9 @@ void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst)
 	//jesli nie udalo sie wyslac wiadomosci, wypisujemy blad (rozmiar to wielkosc struktury - pole mtype)
 	if (msgsnd(id_kolejka,&msg, sizeof(komunikat) - sizeof(long int), flags) == -1)
 	{
-		if (errno == EAGAIN && typ == 1)
-		{
-			return; //odrzucenie logu
-		}
 		perror("Blad wysylania komunikatu!"); //wypisanie bledu
 		sem.v(4);//oddanie semaforu po bledize
+		return
 	}
 }
 
