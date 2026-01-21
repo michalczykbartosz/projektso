@@ -78,7 +78,7 @@ void kolejka::wyslij(int typ,int id_nadawcy, const char* tekst)
 	{
 		perror("Blad wysylania komunikatu!"); //wypisanie bledu
 		sem.v(4);//oddanie semaforu po bledize
-		return
+		return;
 	}
 }
 

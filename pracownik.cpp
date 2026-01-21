@@ -146,7 +146,7 @@ int main(int argc, char* argv[])
 			{
 				sem.v(0); //odblokowanie pamieci zeby praca mogla dalej trwac
 				sem.v(1); //zwrot zarezerwowanego miejsca na tasmie
-				sleep(1);
+				//sleep(1);
 			}
 		}
 			

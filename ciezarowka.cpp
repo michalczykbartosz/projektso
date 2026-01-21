@@ -1,4 +1,4 @@
-#include <cstdio>
+﻿#include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
 #include <ctime>
@@ -117,35 +117,46 @@ int main(int argc, char* argv[])
 			}
 
 			//obsluga paczek standardowo - oczekiwanie z tasmy
-			if (sem.p_przerywalne(2) == false)
+			bool paczka_odebrana = false;
+			while (!paczka_odebrana && !wymuszony_odjazd)
 			{
-				if (wymuszony_odjazd) //jezeli funkcja zwraca false znaczy ze przerwal ja sygnal
+				if (sem.p_nieblokujace(2)) //proboj odebrac paczke nieblokujaco
 				{
-					loguj(CIEZAROWKA, "CIEZAROWKA: Otrzymalem rozkaz natychmiastowego odjazdu, sprawdzam czy sa ekspresy\n");
-					struct komunikat msg;
-					while (!pelna && kol.odbierz_nieblokujaco(4, msg) != -1) //sprawdzenie czy sa ekspresy do zaladowania
-					{
-						double waga_ekspresowych = atof(msg.text);
-						double objetosc_ekspresowych = 0.2;
-
-						//odjazd z ekspresem
-						if (waga_ciezarowki + waga_ekspresowych <= MAX_WAGA_CIEZAROWKA && objetosc_ciezarowki + objetosc_ekspresowych <= MAX_OBJETOSC_CIEZAROWKA)
-						{
-							waga_ciezarowki += waga_ekspresowych;
-							objetosc_ciezarowki += objetosc_ekspresowych;
-							loguj(CIEZAROWKA, "CIEZAROWKA: Zaladowalem ostatni ekspres %.2f przed odjazdem - laczna waga: %.2f\n", waga_ekspresowych, waga_ciezarowki);
-						}
-						else //nie zmiesci sie na ciezarowke - oddanie ekspresu do kolejki
-						{
-							kol.wyslij(4, msg.id_nadawcy, msg.text);
-							loguj(CIEZAROWKA, "CIEZAROWKA: Ekspres %.2f sie nie zmiescil\n",waga_ekspresowych);
-							break;
-						}
-					}
-					break;
+					paczka_odebrana = true;
 				}
-				continue; //jesli to inny sygnal, probujemy dalej
+				//petla spraedzajaca czy jest wymuszony odjazd
 			}
+
+			if (wymuszony_odjazd)
+			{
+				loguj(CIEZAROWKA, "CIEZAROWKA: Otrzymalem rozkaz natychmiastowego odjazdu, sprawdzam czy sa ekspresy\n");
+				struct komunikat msg_ekspres;
+				while (!pelna && kol.odbierz_nieblokujaco(4, msg_ekspres) != -1)
+				{
+					double waga_ekspresowych = atof(msg_ekspres.text);
+					double objetosc_ekspresowych = 0.2;
+
+					if (waga_ciezarowki + waga_ekspresowych <= MAX_WAGA_CIEZAROWKA && objetosc_ciezarowki + objetosc_ekspresowych <= MAX_OBJETOSC_CIEZAROWKA)
+					{
+						waga_ciezarowki += waga_ekspresowych;
+						objetosc_ciezarowki += objetosc_ekspresowych;
+						loguj(CIEZAROWKA, "CIEZAROWKA: Zaladowalem ostatni ekspres %.2f przed odjazdem - laczna waga: %.2f\n", waga_ekspresowych, waga_ciezarowki);
+					}
+					else
+					{
+						kol.wyslij(4, msg_ekspres.id_nadawcy, msg_ekspres.text);
+						loguj(CIEZAROWKA, "CIEZAROWKA: Ekspres %.2f sie nie zmiescil\n", waga_ekspresowych);
+						break;
+					}
+				}
+				break; //wymuszony odjazd - wychodzenie z petli ladowania
+			}
+
+			if (!paczka_odebrana) //nie ma paczki
+			{
+				continue; // spróbuj ponownie
+			}
+
 
 			//sprawdzenie czy podczas czekania na zwykla paczke nie pojawil sie pakiet ekspresowy
 			if (kol.odbierz_nieblokujaco(4, msg) != -1)
@@ -155,7 +166,22 @@ int main(int argc, char* argv[])
 				continue; //powrot do petli ekspresowych paczek
 			}
 
+			if (wymuszony_odjazd)
+			{
+				sem.v(2); //oddanie semafora bo jednak nie bierzemy paczki
+				loguj(CIEZAROWKA, "CIEZAROWKA: Otrzymalem rozkaz natychmiastowego odjazdu przed pobraniem paczki\n");
+				break; //natychmiastowy odjazd
+			}
+
 			sem.p(0); //mutex pamieci
+
+			if (wymuszony_odjazd)
+			{
+				sem.v(0); //odblokuj mutex
+				sem.v(2); //oddaj semafor paczki
+				loguj(CIEZAROWKA, "CIEZAROWKA: Otrzymalem rozkaz natychmiastowego odjazdu w sekcji krytycznej\n");
+				break;
+			}
 
 			Paczka p = st->bufor[st->head];
 
@@ -193,6 +219,21 @@ int main(int argc, char* argv[])
 
 				sem.v(0); //odblokowanie pamieci
 				sem.v(1); //zasygnalizowanie wolnego miejsca na tasmie
+
+				struct komunikat msg_check;
+				if (kol.odbierz_nieblokujaco(4, msg_check) != -1)
+				{
+					//jest pakiet ekspresowy - powrot do petli aby go zaladowac
+					kol.wyslij(4, msg_check.id_nadawcy, msg_check.text); // oddaj do kolejki
+					loguj(CIEZAROWKA, "CIEZAROWKA: Wykrylem pakiet ekspresowy, przerywam ladowanie zwyklych paczek\n");
+					continue; //wrocenie na poczatek petli while
+				}
+
+				if (wymuszony_odjazd)
+				{
+					loguj(CIEZAROWKA, "CIEZAROWKA: Otrzymalem rozkaz odjazdu po zaladowaniu paczki\n");
+					break; //natychmiastowy odjazd
+				}
 			}
 			//brak miejsca
 			else
@@ -210,6 +251,7 @@ int main(int argc, char* argv[])
 		przy_rampie = false;
 		sem.v(3); //zwolnienie rampy
 		//symulacja podrozy ciezarowki - zabezpieczona tak zeby nie przerywal podrozy sygnal
+		/*
 		if (czy_pracowac)
 		{
 			loguj(INFO, "CIEZAROWKA: wyruszam w trase na %d s\n", CZAS_JAZDY);
@@ -227,6 +269,7 @@ int main(int argc, char* argv[])
 				loguj(INFO, "Ciezarowka wrocila z trasy\n");
 			}
 		}
+		*/
 			
 	}
 	return 0;

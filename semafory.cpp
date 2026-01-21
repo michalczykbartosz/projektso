@@ -1,4 +1,4 @@
-#include <sys/types.h>
+﻿#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <unistd.h>
@@ -123,6 +123,29 @@ bool semafor::p_przerywalne(int nr_semafor)
 			return false;
 		}
 		perror("Blad operacji P semafora");
+		exit(1);
+	}
+	return true;
+}
+
+bool semafor::p_nieblokujace(int nr_semafor)
+{
+	struct sembuf operacja;
+	operacja.sem_num = nr_semafor;
+	operacja.sem_op = -1;
+	operacja.sem_flg = IPC_NOWAIT;  //nie czekaj jeśli semafor == 0
+
+	if (semop(id_semafor, &operacja, 1) == -1)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK) //semafor jest 0
+		{
+			return false;
+		}
+		if (errno == EINTR) //przerwanie sygnalem
+		{
+			return false;
+		}
+		perror("Blad operacji P nieblokujace");
 		exit(1);
 	}
 	return true;
