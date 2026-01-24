@@ -8,11 +8,16 @@
 #include "bledy.h"
 #include <csignal>
 #include "logger.h"
+#include <sched.h> 
 
 //inicjalizacja globlanych flag sterujacych procesem
 bool czy_pracowac = true; //flaga glownej petli 
 bool wymuszony_odjazd = false; //flaga ustawiana przez SIGUSR1
 bool przy_rampie = false; //flaga informujaca czy ciezarowka jest przy rampie
+
+volatile sig_atomic_t wznowiono = 0;
+semafor* global_sem = nullptr;
+bool zatrzymany_z_rampa = false;
 
 //funkcja sprawdzajaca czy nie przyszedl sygnal SIGTERM lub SIGINT ktory konczy prace ciezarowki
 void pracowanie(int sygnal) 
@@ -33,25 +38,77 @@ void ekspresowy_odjazd(int sygnal)
 	}
 }
 
+//funkcja obslugujaca wstrzymanie i kontynuacje pracy procesow
+void obsluga_sigcont(int sig)
+{
+	if (sig == SIGCONT)
+	{
+		if (przy_rampie && global_sem != nullptr)
+		{
+			//zwolnij wszystko i zakoncz proces
+			global_sem->v(3);
+			loguj(CIEZAROWKA, "SIGCONT: Zwalniam zasoby i koncze proces\n");
+			_exit(0); //zakoncz proces
+		}
+	}
+}
+
+//funkcja obslugujaca wstrzymanie i kontynuacje proecsow przyciskiem
+void obsluga_pause(int sig)
+{
+	if (sig == SIGUSR2)
+	{
+		semafor sem(5, false);
+		shared_memory pam(false);
+
+		sem.p(0);
+		pam.dane()->system_paused = !pam.dane()->system_paused;
+		bool paused = pam.dane()->system_paused;
+		sem.v(0);
+
+		if (paused)
+		{
+			loguj(SYSTEM, "\n SYMULACJA WSTRZYMANA (nacisnij 'p' aby wznowic) \n");
+		}
+		else
+		{
+			loguj(SYSTEM, "\n SYMULACJA WZNOWIONA \n");
+		}
+	}
+}
+
+
 int main(int argc, char* argv[])
 {
 	//inicjalizacja zasobow systemowych
 	semafor sem(5);
 	shared_memory pam;
 	kolejka kol;
+	global_sem = &sem;
 
 	//rejestracja sygnalow
 	signal(SIGTERM, pracowanie);
 	signal(SIGINT, pracowanie);
 	signal(SIGUSR1, ekspresowy_odjazd);
+	signal(SIGCONT, obsluga_sigcont);
+	signal(SIGUSR2, obsluga_pause);
 
 	stan_tasmy* st = pam.dane(); //wskaznik na strukture w pamieci wspoldzielonej
 
 	//glowna petla pracy ciezarowki, dziala dopoki jest flaga lub na tasmie sa paczki
 	while (czy_pracowac || st->aktualna_liczba_paczek > 0) 
 	{
+
+		if (wznowiono)
+		{
+			loguj(CIEZAROWKA, "Ciezarowka wznowiona, podjezdam pod rampe\n");
+			wznowiono = 0;
+			//flaga zatrzymany_z_rampa juz jest na false
+		}
+
 		//podjazd pod rampe
 		sem.p(3); //opuszczenie semafora (semafor nr. 3 kontroluje czy jest ciezarowka przy rampie)
+		zatrzymany_z_rampa = true;
 		przy_rampie = true;
 		if (czy_pracowac) //ciezarowka podjezdza pod rampe tylko gdy magazyn pracuje
 		{
@@ -67,6 +124,17 @@ int main(int argc, char* argv[])
 		while (!pelna) 
 		{
 			struct komunikat msg;
+
+			while (true) //petla sprawdzajaca pauze
+			{
+				sem.p(0);
+				bool paused = st->system_paused;
+				sem.v(0);
+
+				if (!paused) break; //brak pauzy - kontynuuj
+
+				sched_yield(); //oddaj cpu
+			}
 
 			//odjazd ciezarowki po sygnale SIGUSR1
 			if (wymuszony_odjazd == true) 
@@ -249,6 +317,7 @@ int main(int argc, char* argv[])
 			loguj(CIEZAROWKA, "CIEZARKOWA: Odjezdzam z waga %.2f\n", waga_ciezarowki);
 		}
 		przy_rampie = false;
+		zatrzymany_z_rampa = false;
 		sem.v(3); //zwolnienie rampy
 		//symulacja podrozy ciezarowki - zabezpieczona tak zeby nie przerywal podrozy sygnal
 		/*

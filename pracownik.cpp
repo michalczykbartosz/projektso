@@ -8,6 +8,7 @@
 #include "bledy.h"
 #include <csignal>
 #include "logger.h"
+#include <sched.h> 
 
 kolejka* globalna_kolejka = nullptr; //utworzenie zasobu globalnej kolejki
 bool czy_pracowac = true; //flaga sterujaca glowna petla pracownikow
@@ -119,8 +120,19 @@ int main(int argc, char* argv[])
 
 	while (czy_pracowac) //glowna petla pracy zwyklych pracownikow
 	{
-		//sleep(2);
+		sleep(1);
 		if (!czy_pracowac) break; //jesli czy_pracowac == false od razu przerywamy petle
+
+		while (true) //petla sprawdzajaca pauze
+		{
+			sem.p(0);
+			bool paused = pamiec.dane()->system_paused;
+			sem.v(0);
+
+			if (!paused) break; //brak pauzy - kontynuuj
+
+			sched_yield(); //oddaj cpu
+		}
 
 		double waga = losuj_wage(min_waga, max_waga); //losowanie wagi
 		bool czy_dzwignie = false; //ustawienie flagi udzwigu tasmy

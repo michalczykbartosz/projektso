@@ -31,6 +31,32 @@ void obsluga_konca(int sig)
     }
 }
 
+//funkcja obslugujaca pauze przyciskiem
+void obsluga_pause(int sig)
+{
+    if (sig == SIGUSR2)
+    {
+        semafor sem(5, false);
+        shared_memory pam(false);
+
+        sem.p(0); 
+        pam.dane()->system_paused = !pam.dane()->system_paused;
+        bool paused = pam.dane()->system_paused;
+        sem.v(0); 
+
+        if (paused)
+        {
+            loguj(SYSTEM, "\n SYMULACJA WSTRZYMANA (nacisnij 'p' aby wznowic) \n");
+        }
+        else
+        {
+            loguj(SYSTEM, "\n SYMULACJA WZNOWIONA \n");
+        }
+    }
+}
+
+
+
 int main(int argc, char* argv[])
 {
     int liczba_ciezarowek = LICZBA_CIEZAROWEK; //domyslna wartosc ze wspolne.h
@@ -63,6 +89,7 @@ int main(int argc, char* argv[])
 
     signal(SIGINT, obsluga_konca); //rejestracja sygnalu SIGINT do zakonczenia symulacji
     signal(SIGCHLD, obsluga_sigchld); //rejestracja sygnalu SIGCHLD do asynchronicznego zbierania procesow zombie
+    signal(SIGUSR2, obsluga_pause);
     stan_tasmy* s = pamiec.dane();
     memset(s, 0, sizeof(stan_tasmy));
 
@@ -72,6 +99,7 @@ int main(int argc, char* argv[])
     pamiec.dane()->aktualna_liczba_paczek = 0;
     pamiec.dane()->aktualna_waga_paczek_tasma = 0.0;
     pamiec.dane()->dziala = true;
+    pamiec.dane()->system_paused = false;
 
     //ustawienie poczatkowych wartosci semaforow
     sem.ustaw(0, 1);            //mutex pamieci
@@ -158,6 +186,11 @@ int main(int argc, char* argv[])
             {
                 kill(getppid(), SIGINT);
                 _exit(0);
+            }
+            else if (x == 'p' || x == 'P')
+            {
+                kill(getppid(), SIGUSR2); 
+                loguj(SYSTEM, "Przelaczono pause/resume\n");
             }
         }
         _exit(0);

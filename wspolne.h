@@ -35,6 +35,7 @@ struct stan_tasmy
 	int aktualna_liczba_paczek;
 	double aktualna_waga_paczek_tasma;
 	bool dziala;
+	bool system_paused;
 };
 
 struct komunikat
