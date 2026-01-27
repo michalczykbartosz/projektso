@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	signal(SIGTERM, pracowanie);
 	signal(SIGINT, pracowanie);
 	signal(SIGUSR1, ekspresowy_odjazd);
-	signal(SIGCONT, obsluga_sigcont);
+	//signal(SIGCONT, obsluga_sigcont);
 	signal(SIGUSR2, obsluga_pause);
 
 	stan_tasmy* st = pam.dane(); //wskaznik na strukture w pamieci wspoldzielonej
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
 
 				if (!paused) break; //brak pauzy - kontynuuj
 
-				sched_yield(); //oddaj cpu
+				//sched_yield(); //oddaj cpu
 			}
 
 			//odjazd ciezarowki po sygnale SIGUSR1
