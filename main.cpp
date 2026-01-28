@@ -248,6 +248,26 @@ int main(int argc, char* argv[])
     {
         kill(pidy_pracownikow[i], SIGTERM); //zabijanie wszystkich pracownikow z wektora
     }
+
+    loguj(SYSTEM, "Czekam na wywiezienie pozostałych paczek\n");
+    bool tasma_pusta = false;
+    while (!tasma_pusta) {
+        sem.p(0); //mutex pamieci
+        int pozostalo = pamiec.dane()->aktualna_liczba_paczek;
+        sem.v(0);
+
+        if (pozostalo == 0) {
+            tasma_pusta = true;
+        }
+        else {
+            loguj(SYSTEM, "Na tasmie zostalo jeszcze %d paczek\n", pozostalo);
+            sleep(1); //sprawdzanie co sekunde
+        }
+    }
+    if (pgid_ciezarowek > 0) {
+        kill(-pgid_ciezarowek, SIGUSR1); //
+    }
+
     if (pgid_ciezarowek > 0)
     {
         kill(-pgid_ciezarowek, SIGTERM);//zabijamy cala grupe ciezarowek

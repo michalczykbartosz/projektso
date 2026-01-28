@@ -120,7 +120,7 @@ int main(int argc, char* argv[])
 
 	while (czy_pracowac) //glowna petla pracy zwyklych pracownikow
 	{
-		//sleep(1);
+		//sleep(3);
 		if (!czy_pracowac) break; //jesli czy_pracowac == false od razu przerywamy petle
 
 		while (true) //petla sprawdzajaca pauze
