@@ -107,7 +107,7 @@ int kolejka::odbierz_nieblokujaco(int typ, komunikat& msg)
 {
 	int wynik=  msgrcv(id_kolejka, &msg, sizeof(msg) - sizeof(long), typ, IPC_NOWAIT);
 
-	if (wynik != 1)
+	if (wynik != -1)
 	{
 		semafor sem(5);
 		sem.v(4);
